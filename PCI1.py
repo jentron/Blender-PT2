@@ -174,12 +174,14 @@ class CharacterImport(bpy.types.Operator):
                              basepath = suffix
                         else:
                             suffix = suffix + temp + '\\'
-                baspath = basepath.replace('\\\\', '\\')                        
+                basepath = basepath.replace('\\\\', '\\')                        
                 #print ('basepath:', basepath)                        
                 
             else:
-                pass 
+                basepath = ''
+                # pass 
                 # Linux path fuction
+                print (basepath)
 
             return (basepath)                          
         
@@ -1408,7 +1410,7 @@ class CharacterImport(bpy.types.Operator):
                     for mat in mesh.materials:
                         skip = 1
                         if mat.name == face[1]:
-                            mesh.faces[face[0]].material_index = mat_count
+                            mesh.tessfaces[face[0]].material_index = mat_count
                         mat_count = mat_count + 1
                 
 ##########################################################

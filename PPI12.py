@@ -1231,7 +1231,7 @@ class LoadPoserProp(bpy.types.Operator):
                     for mat in mesh.materials:
                         skip = 1
                         if mat.name == face[1]:
-                            mesh.faces[face[0]].material_index = mat_count
+                            mesh.tessfaces[face[0]].material_index = mat_count
                         mat_count = mat_count + 1
                 
 ##########################################################

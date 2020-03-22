@@ -77,7 +77,7 @@ def read_dir():
        outstr = outstr.replace('\\', '/')
        
     #bpy.PT2path = outstr
-    outstr = outstr + '\\favorites.pt2'   
+    outstr = outstr + '/favorites.pt2'   
     bpy.PDBpath = outstr    
     file = open(outstr, 'r')
     line = []
