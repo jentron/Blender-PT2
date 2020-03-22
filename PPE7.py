@@ -345,7 +345,7 @@ class SetPropPath(bpy.types.Operator, ExportHelper):
     # ExportHelper mixin class uses this
     filename_ext = ".txt"
 
-    filter_glob = StringProperty(default="*.txt", options={'HIDDEN'})
+    filter_glob : StringProperty(default="*.txt", options={'HIDDEN'})
 
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.
@@ -381,7 +381,7 @@ class SetGeometryPath(bpy.types.Operator, ExportHelper):
     # ExportHelper mixin class uses this
     filename_ext = ".pp2"
 
-    filter_glob = StringProperty(default="*.pp2", options={'HIDDEN'})
+    filter_glob : StringProperty(default="*.pp2", options={'HIDDEN'})
 
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.
@@ -419,7 +419,7 @@ class SetTexturePath(bpy.types.Operator, ExportHelper):
     # ExportHelper mixin class uses this
     filename_ext = ".txt"
 
-    filter_glob = StringProperty(default="*.txt", options={'HIDDEN'})
+    filter_glob : StringProperty(default="*.txt", options={'HIDDEN'})
 
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.

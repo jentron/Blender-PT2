@@ -188,7 +188,7 @@ class Read_Mat(bpy.types.Operator):
     bl_label = "Read Mat File"
     filename_ext = ".pp2"
     #filter_glob = StringProperty(default="*.pp2", options={'HIDDEN'})    
-    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     
 
     

@@ -106,8 +106,8 @@ class ExportSomeData(bpy.types.Operator):
     bl_label = "Load Prop"
     filename_ext = ".pp2"
     
-    filter_glob = StringProperty(default="*.pp2", options={'HIDDEN'})    
-    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    filter_glob : StringProperty(default="*.pp2", options={'HIDDEN'})    
+    filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     CPT = []
     child_parent = []
 
@@ -688,7 +688,7 @@ class ExportSomeData(bpy.types.Operator):
             print ('=        Creating Face array                     =')
             print ('==================================================')                
             
-            mesh.uv_textures.new()
+            mesh.uv_layers.new()
             time_start = time.time()
            
             facecount = 0
@@ -756,7 +756,7 @@ class ExportSomeData(bpy.types.Operator):
             #  Skip if no UVmap on incomming mesh
             #  
             time_start = time.time()    
-            mesh.uv_textures.new()
+            mesh.uv_layers.new()
             facecount = 0
             longfaces = []
             print ('Len of textureverts:', len(textureverts))
@@ -819,7 +819,8 @@ class ExportSomeData(bpy.types.Operator):
                         mat1 = bpy.data.materials.new(mat_name)
                     
                     mat1 = bpy.data.materials[mat_name]
-                    mat1.use_transparent_shadows = True
+                    ## mat1.use_transparent_shadows = True #OBSOLETE
+                    mat1.use_nodes = True
                     
                     ###
                     #
@@ -831,31 +832,31 @@ class ExportSomeData(bpy.types.Operator):
                     if info.startswith('KdColor ') is True:
                         tempstr = info.lstrip('KdColor ')
                         array = [float(s) for s in tempstr.split()]
-                        if len(array) > 3:
-                            array.remove(array[3])
-                        mat1.diffuse_color = array
+                        if len(array) < 3:
+                            array[3] = 0
+                        mat1.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = array
                         
-                    #  Specular Color
-                    if info.startswith('KsColor ') is True:
-                        tempstr = info.lstrip('KsColor ')
-                        array = [float(s) for s in tempstr.split()]
-                        if len(array) > 3:
-                            array.remove(array[3])
-                        mat1.specular_color = array
-
-                    #  Reflection Strength
-                    if info.startswith('reflectionStrength ') is True:
-                        tempstr = info.replace('reflectionStrength ', '')
-                        tempstr = tempstr.strip()
-                        mat1.raytrace_mirror.reflect_factor = float(tempstr)
-                        
-                    if info.startswith('tMax ') is True:
-                        tempstr = info.replace('tMax ','')
-                        tempstr = tempstr.strip()
-                        if float(tempstr) > 0:
-                            transparency = 1 - float(tempstr)
-                            mat1.use_transparency = True
-                            mat1.alpha = transparency
+#                    #  Specular Color
+#                    if info.startswith('KsColor ') is True:
+#                        tempstr = info.lstrip('KsColor ')
+#                        array = [float(s) for s in tempstr.split()]
+#                        if len(array) < 3:
+#                            array[3] = 0
+#                        mat1.node_tree.nodes['Principled BSDF'].inputs['Specular Tint'].default_value = array
+#
+#                    #  Reflection Strength
+#                    if info.startswith('reflectionStrength ') is True:
+#                        tempstr = info.replace('reflectionStrength ', '')
+#                        tempstr = tempstr.strip()
+#                        mat1.raytrace_mirror.reflect_factor = float(tempstr)
+#                        
+#                    if info.startswith('tMax ') is True:
+#                        tempstr = info.replace('tMax ','')
+#                        tempstr = tempstr.strip()
+#                        if float(tempstr) > 0:
+#                            transparency = 1 - float(tempstr)
+#                            mat1.use_transparency = True
+#                            mat1.alpha = transparency
                         
                     ####    
                     #
@@ -1233,7 +1234,7 @@ class ExportSomeData(bpy.types.Operator):
                     for mat in mesh.materials:
                         skip = 1
                         if mat.name == face[1]:
-                            mesh.tessfaces[face[0]].material_index = mat_count
+                            mesh.polygons[face[0]].material_index = mat_count
                         mat_count = mat_count + 1
                 
 ##########################################################
@@ -1436,7 +1437,7 @@ class ExportSomeData(bpy.types.Operator):
             print ('\n')
         print ('--------------------------------------------------------------------')
 
-        bpy.context.scene.update()
+        bpy.context.view_layer.update()
 
         ############################################    
         # collect locations / parent / reset locations
@@ -1451,7 +1452,7 @@ class ExportSomeData(bpy.types.Operator):
             location_array.append([obj, location])
             print ('----------------------------------------')
         
-        bpy.context.scene.update()
+        bpy.context.view_layer.update()
 
         #----------------------------------------------
 
@@ -1486,7 +1487,7 @@ class ExportSomeData(bpy.types.Operator):
             obj.matrix_world[3] = x[1]
         #----------------------------------------------
 
-        bpy.context.scene.update()
+        bpy.context.view_layer.update()
 
         ############################################    
         # 
@@ -1505,7 +1506,7 @@ class ExportSomeData(bpy.types.Operator):
             print (x)
             obj = bpy.data.objects[x[0]]
             obj.rotation_euler = (x[1]*degr, x[2]*degr, x[3]*degr)
-            bpy.context.scene.update()
+            bpy.context.view_layer.update()
 
         # Scale
         print ('--------------------------------------------------------')
@@ -1515,7 +1516,7 @@ class ExportSomeData(bpy.types.Operator):
             obj = bpy.data.objects[x[0]]
             if x[1] > 0 and x[2] > 0 and x[3] > 0:
                 obj.scale = (x[1], x[2], x[3])
-            bpy.context.scene.update()
+            bpy.context.view_layer.update()
             
 
         ###########################################################
@@ -1556,11 +1557,11 @@ def menu_func_import(self, context):
 
 def register():
     bpy.utils.register_class(ExportSomeData)
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 def unregister():
     bpy.utils.unregister_class(ExportSomeData)
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 
 if __name__ == "__main__":
     register()

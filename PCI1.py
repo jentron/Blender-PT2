@@ -153,8 +153,8 @@ class CharacterImport(bpy.types.Operator):
     bl_label = "Load Character"
     filename_ext = ".CR2"
     
-    filter_glob = StringProperty(default="*.cr2", options={'HIDDEN'})    
-    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    filter_glob : StringProperty(default="*.cr2", options={'HIDDEN'})    
+    filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     
     
 
@@ -1527,11 +1527,11 @@ def menu_func_import(self, context):
 
 def register():
     bpy.utils.register_class(CharacterImport)
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 def unregister():
     bpy.utils.unregister_class(CharacterImport)
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 
 if __name__ == "__main__":
     register()    

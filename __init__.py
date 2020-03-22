@@ -27,11 +27,11 @@
 
 bl_info = {
     "name": "Poser Tools 2",
-    "author": "Scott Brickwood",
-    "version": (1, 1),
-    "blender": (2, 5, 8),
-    "api": 37702,
-    "location": "Import-Export",
+    "author": "Scott Brickwood, Ron Jensen",
+    "version": (1, 2),
+    "blender": (2, 80, 0),
+    "api": 41098,
+    "location": "File > Import-Export",
     "description": "Tool for importing & exporting Poser props and characters",
     "warning": "Work in progress",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/Import-Export/Poser_Tools",

@@ -101,9 +101,9 @@ class LoadPoserProp(bpy.types.Operator):
     time_start = time.time()
     bl_idname = "load.poser_prop"
     bl_label = "Load Prop"
-    filename = bpy.props.StringProperty()    
+    filename : bpy.props.StringProperty()    
     
-    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     CPT = []
     child_parent = []
 

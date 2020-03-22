@@ -153,8 +153,8 @@ class CharacterImport(bpy.types.Operator):
     bl_label = "Load Character"
     filename_ext = ".CR2"
     
-    filter_glob = StringProperty(default="*.cr2", options={'HIDDEN'})    
-    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    filter_glob : StringProperty(default="*.cr2", options={'HIDDEN'})    
+    filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     
 
     def execute(self, context):

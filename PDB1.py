@@ -251,8 +251,8 @@ class open_dir(bpy.types.Operator):
     '''Open Sub Directory'''
     bl_idname = "open.sub"  
     bl_label = "Open Sub Directory"
-    location = bpy.props.StringProperty()
-    newlocation = bpy.props.StringProperty()    
+    location : bpy.props.StringProperty()
+    newlocation : bpy.props.StringProperty()    
     #print ('location:', location)
     
     #@classmethod
@@ -279,8 +279,8 @@ class open_prop(bpy.types.Operator):
     '''Open Prop'''
     bl_idname = "open.prop"  
     bl_label = "Open Poser Prop"
-    filename = bpy.props.StringProperty()
-    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    filename : bpy.props.StringProperty()
+    filepath : bpy.props.StringProperty(subtype="FILE_PATH")
 
     def execute(self, context):
         try:
@@ -310,7 +310,7 @@ class select_drive(bpy.types.Operator):
     '''Select Available Drive'''
     bl_idname = "select.drive"  
     bl_label = "Select available disk drives"
-    new_drive = bpy.props.StringProperty()    
+    new_drive : bpy.props.StringProperty()    
     
     
     def execute(self, context):
@@ -478,7 +478,7 @@ def menu_func_import(self, context):
     skip = 1
 
 def register():
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.utils.register_class(Poser_Browser)
     bpy.utils.register_class(open_dir)
     bpy.utils.register_class(up_button)   
