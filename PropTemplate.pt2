@@ -1,0 +1,13 @@
+{
+version
+	{
+[version]number 4
+	}
+[objfile]	objFileGeom 0 0 :Runtime:Geometries:Blender3DClub:Barrel1.obj
+[prop details]
+
+doc
+	{
+[addActor]	addActor Barrel1
+	}
+}

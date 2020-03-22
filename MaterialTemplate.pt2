@@ -1,0 +1,18 @@
+[kd]		KdColor 0.20000001192092896 0.80000001192092896 0.80000001192092896 1
+[ka]		KaColor 0 0 0 1
+[ks]		KsColor 0.752941 0.752941 0.752941 1 
+		TextureColor 0.8 0.8 0.8 1 
+		NsExponent 100
+		tMin 0 
+[tMax]		tMax 0 
+		tExpo 0 
+		bumpStrength 1 
+		ksIgnoreTexture 0 
+		reflectThruLights 0 
+		reflectThruKd 0 
+[textureMap]		textureMap ":Blender3dClub:WoodPlanksBare0164_1_S.jpg" 0 0
+[bumpMap]		bumpMap ":Blender3dClub:WoodPlanksBare0164_1_S.jpg" 0 0
+[alphaMap]
+[reflectionMap]		reflectionMap NO_MAP
+		ReflectionColor 0 0 0 1 
+		reflectionStrength 0
