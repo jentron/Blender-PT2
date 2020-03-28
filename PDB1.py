@@ -27,6 +27,7 @@
 
 import bpy
 import os, glob, inspect, sys, PT2
+from pathlib import Path
 
 
 new_drive = bpy.props.StringProperty()  
@@ -67,27 +68,19 @@ def read_dir():
     ############################################
     # Find PT2 Folder:
 
-    outstr = PT2.__path__[0] + '\\'
+    outstr = PT2.__path__[0]  + '/favorites.pt2'
+    outstr = Path(outstr)
     print ('outstr:', outstr)
-    outstr = os.path.abspath(outstr)
 
-    if sys.platform.startswith('win'):
-       pass
-    else:
-       outstr = outstr.replace('\\', '/')
-       
-    #bpy.PT2path = outstr
-    outstr = outstr + '/favorites.pt2'   
-    bpy.PDBpath = outstr    
     file = open(outstr, 'r')
     line = []
     for x in file:
         line.append(x)
     file.close()
     #folders = []    
-    props_folder = line[0].strip()
-    chars_folder = line[1].strip()
-    poses_folder = line[2].strip()
+    props_folder = Path(line[0].strip())
+    chars_folder = Path(line[1].strip())
+    poses_folder = Path(line[2].strip())
     folders.append(props_folder)
     folders.append(chars_folder)
     folders.append(poses_folder)

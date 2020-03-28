@@ -43,6 +43,11 @@ import bpy
 import time
 import sys
 import os
+import re
+import gzip
+from pathlib import Path
+import errno
+
 from bpy_extras import *
 from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
@@ -51,6 +56,37 @@ print ('\n')
 print ('--- Starting Poser Prop Importer Version 12 ---')
 systemType = sys.platform
 print ('System Type:', systemType)
+
+def PPI_open(name, mode):
+    is_gzip=True
+    
+    myfile=Path(name)
+    #print("Test Existance")
+    if( myfile.exists() ):
+        print(f"%s exists!"%myfile)
+        new_file=myfile
+    else:
+        stem = list(myfile.suffix)
+        print(stem)
+        stem[-1] = 'z'
+        new_file = Path(myfile.parents[0],  myfile.stem + "".join(stem))
+
+    if( new_file.exists()):
+        pass
+    else:
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), p)
+
+    with gzip.open(new_file, 'r') as fh:
+        try:
+            fh.read(1)
+        except OSError:
+            print(f'%s is not a gzip file by OSError'%new_file)
+            is_gzip=False
+    
+    if(is_gzip):
+        return( gzip.open(new_file, mode))
+
+    return( open(new_file, mode))
 
 def adjustvert(objmesh, x, y, z):
     print (objmesh, x,y,z)
@@ -102,7 +138,9 @@ class LoadPoserProp(bpy.types.Operator):
     bl_idname = "load.poser_prop"
     bl_label = "Load Prop"
     filename : bpy.props.StringProperty()    
-    
+    filename_ext = ".pp2"
+
+    filter_glob : StringProperty(default="*.pp2", options={'HIDDEN'})    
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     CPT = []
     child_parent = []
@@ -119,7 +157,7 @@ class LoadPoserProp(bpy.types.Operator):
         # Scan for multi obj's first:
         # 
         time_start = time.time()
-        file = open(self.filepath, 'r')
+        file = PPI_open(self.filepath, 'rt')
         objcounts = []
         for x in file:
             #PropArray.append(x.strip())
@@ -189,7 +227,7 @@ class LoadPoserProp(bpy.types.Operator):
             print ('=       len of objcounts < 2                     =')
             print ('==================================================')    
        
-            file = open(self.filepath, 'r')
+            file = PPI_open(self.filepath, 'rt')
             time_start = time.time()
             for x in file:
                 PropArray.append(x.strip())
@@ -224,7 +262,7 @@ class LoadPoserProp(bpy.types.Operator):
             #         
             if geompath > '':
                 try:
-                    file = open(geompath, 'r')
+                    file = PPI_open(geompath, 'rt')
                     for x in file:
                         PropArray.append(x.strip())           
                     file.close()                        
@@ -256,7 +294,7 @@ class LoadPoserProp(bpy.types.Operator):
             current_prop = ''
 
             PropArray = []
-            file = open(self.filepath, 'r')
+            file = PPI_open(self.filepath, 'rt')
             objcounter = 1
             proploop = False
             currentPropArray = []
@@ -296,7 +334,7 @@ class LoadPoserProp(bpy.types.Operator):
                         subpath = subpath.replace(':', '\\')                
                         geompath = '\\'.join(contentloc) + subpath
                         try:
-                            file = open(geompath, 'r')
+                            file = PPI_open(geompath, 'rt')
                             for x in file:
                                 PropArray.append(x.strip())           
                             file.close()                        
@@ -316,7 +354,7 @@ class LoadPoserProp(bpy.types.Operator):
                            #print (x)
                        
                        try:
-                           file = open(geompath, 'r')
+                           file = PPI_open(geompath, 'rt')
                            for x in file:
                                PropArray.append(x.strip())           
                            file.close()                        
@@ -684,7 +722,7 @@ class LoadPoserProp(bpy.types.Operator):
             print ('=        Creating Face array                     =')
             print ('==================================================')                
             
-            mesh.uv_textures.new()
+            mesh.uv_layers.new()
             time_start = time.time()
            
             facecount = 0
@@ -752,7 +790,7 @@ class LoadPoserProp(bpy.types.Operator):
             #  Skip if no UVmap on incomming mesh
             #  
             time_start = time.time()    
-            mesh.uv_textures.new()
+            mesh.uv_layers.new()
             facecount = 0
             longfaces = []
             print ('Len of textureverts:', len(textureverts))
@@ -778,7 +816,7 @@ class LoadPoserProp(bpy.types.Operator):
             ##########################################################################
             # 
             #  Adjustmenst from scale, rotation, offsets
-            bpy.context.scene.update()    
+            bpy.context.view_layer.update()    
         
             newobj = bpy.context.active_object
             print ('newobj:', newobj.name)
@@ -817,7 +855,8 @@ class LoadPoserProp(bpy.types.Operator):
                         mat1 = bpy.data.materials.new(mat_name)
                     
                     mat1 = bpy.data.materials[mat_name]
-                    mat1.use_transparent_shadows = True
+                    ## mat1.use_transparent_shadows = True #OBSOLETE
+                    mat1.use_nodes = True
                     
                     ###
                     #
@@ -829,31 +868,31 @@ class LoadPoserProp(bpy.types.Operator):
                     if info.startswith('KdColor ') is True:
                         tempstr = info.lstrip('KdColor ')
                         array = [float(s) for s in tempstr.split()]
-                        if len(array) > 3:
-                            array.remove(array[3])
-                        mat1.diffuse_color = array
+                        if len(array) < 3:
+                            array[3] = 0
+                        mat1.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = array
                         
-                    #  Specular Color
-                    if info.startswith('KsColor ') is True:
-                        tempstr = info.lstrip('KsColor ')
-                        array = [float(s) for s in tempstr.split()]
-                        if len(array) > 3:
-                            array.remove(array[3])
-                        mat1.specular_color = array
-
-                    #  Reflection Strength
-                    if info.startswith('reflectionStrength ') is True:
-                        tempstr = info.replace('reflectionStrength ', '')
-                        tempstr = tempstr.strip()
-                        mat1.raytrace_mirror.reflect_factor = float(tempstr)
-                        
-                    if info.startswith('tMax ') is True:
-                        tempstr = info.replace('tMax ','')
-                        tempstr = tempstr.strip()
-                        if float(tempstr) > 0:
-                            transparency = 1 - float(tempstr)
-                            mat1.use_transparency = True
-                            mat1.alpha = transparency
+#                    #  Specular Color
+#                    if info.startswith('KsColor ') is True:
+#                        tempstr = info.lstrip('KsColor ')
+#                        array = [float(s) for s in tempstr.split()]
+#                        if len(array) < 3:
+#                            array[3] = 0
+#                        mat1.node_tree.nodes['Principled BSDF'].inputs['Specular Tint'].default_value = array
+#
+#                    #  Reflection Strength
+#                    if info.startswith('reflectionStrength ') is True:
+#                        tempstr = info.replace('reflectionStrength ', '')
+#                        tempstr = tempstr.strip()
+#                        mat1.raytrace_mirror.reflect_factor = float(tempstr)
+#                        
+#                    if info.startswith('tMax ') is True:
+#                        tempstr = info.replace('tMax ','')
+#                        tempstr = tempstr.strip()
+#                        if float(tempstr) > 0:
+#                            transparency = 1 - float(tempstr)
+#                            mat1.use_transparency = True
+#                            mat1.alpha = transparency
                         
                     ####    
                     #
@@ -879,7 +918,8 @@ class LoadPoserProp(bpy.types.Operator):
                         if systemType.startswith('win'):
                             tempstr = tempstr.replace(':', '\\')
                         else:
-                            tempstr = tempstr.replace(':', '/')                            
+                            tempstr = re.sub(r'^[a-zA-Z]*:', '/', tempstr) #drop the drive letter
+                            tempstr = re.sub(r'[:\\]', '/', tempstr)
                             
                         if systemType.startswith('win'):                            
                             if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
@@ -1231,7 +1271,7 @@ class LoadPoserProp(bpy.types.Operator):
                     for mat in mesh.materials:
                         skip = 1
                         if mat.name == face[1]:
-                            mesh.tessfaces[face[0]].material_index = mat_count
+                            mesh.polygons[face[0]].material_index = mat_count
                         mat_count = mat_count + 1
                 
 ##########################################################
@@ -1259,7 +1299,7 @@ class LoadPoserProp(bpy.types.Operator):
         print ('==================================================')    
 
         
-        file = open(self.filepath, 'r')        
+        file = PPI_open(self.filepath, 'rt')        
         
         '''
         prop name, parent, prop's offsetb
@@ -1434,7 +1474,7 @@ class LoadPoserProp(bpy.types.Operator):
             print ('\n')
         print ('--------------------------------------------------------------------')
 
-        bpy.context.scene.update()
+        bpy.context.view_layer.update()
 
         ############################################    
         # collect locations / parent / reset locations
@@ -1449,7 +1489,7 @@ class LoadPoserProp(bpy.types.Operator):
             location_array.append([obj, location])
             print ('----------------------------------------')
         
-        bpy.context.scene.update()
+        bpy.context.view_layer.update()
 
         #----------------------------------------------
 
@@ -1484,7 +1524,7 @@ class LoadPoserProp(bpy.types.Operator):
             obj.matrix_world[3] = x[1]
         #----------------------------------------------
 
-        bpy.context.scene.update()
+        bpy.context.view_layer.update()
 
         ############################################    
         # 
@@ -1503,7 +1543,7 @@ class LoadPoserProp(bpy.types.Operator):
             print (x)
             obj = bpy.data.objects[x[0]]
             obj.rotation_euler = (x[1]*degr, x[2]*degr, x[3]*degr)
-            bpy.context.scene.update()
+            bpy.context.view_layer.update()
 
         # Scale
         print ('--------------------------------------------------------')
@@ -1513,7 +1553,7 @@ class LoadPoserProp(bpy.types.Operator):
             obj = bpy.data.objects[x[0]]
             if x[1] > 0 and x[2] > 0 and x[3] > 0:
                 obj.scale = (x[1], x[2], x[3])
-            bpy.context.scene.update()
+            bpy.context.view_layer.update()
             
 
         ###########################################################
@@ -1544,21 +1584,21 @@ class LoadPoserProp(bpy.types.Operator):
         print("Minutes: %.2f" % (total_time/60))  
         return {'FINISHED'}
 
-    #def invoke(self, context, event):
-    #    context.window_manager.fileselect_add(self)
-    #    return {'RUNNING_MODAL'}
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
 # Only needed if you want to add into a dynamic menu
-#def menu_func_import(self, context):
-#    self.layout.operator(LoadPoserProp.bl_idname, text="Poser Prop Importer")
+def menu_func_import(self, context):
+    self.layout.operator(LoadPoserProp.bl_idname, text="Poser Prop Importer")
 
 def register():
     bpy.utils.register_class(LoadPoserProp)
-    #bpy.types.INFO_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 def unregister():
     bpy.utils.unregister_class(LoadPoserProp)
-    #bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 
 if __name__ == "__main__":
     register()

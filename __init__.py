@@ -40,7 +40,7 @@ bl_info = {
 import bpy
 
 from . import PPI12
-from . import PPI11
+#from . import PPI11
 from . import PPE7
 from . import PCI1
 from . import PCI2
@@ -55,7 +55,7 @@ class LoadPT2:
 
 def register():
     #import PT2
-    LoadPT2().PT2.PPI11.register()
+#    LoadPT2().PT2.PPI11.register()
     LoadPT2().PT2.PPI12.register()
     LoadPT2().PT2.PPE7.register()
     LoadPT2().PT2.PCI1.register()
@@ -65,7 +65,7 @@ def register():
     LoadPT2().PT2.PDB1.register()
 
 def unregister():
-    LoadPT2().PT2.PPI11.unregister()
+#    LoadPT2().PT2.PPI11.unregister()
     LoadPT2().PT2.PPI12.unregister()
     LoadPT2().PT2.PPE7.unregister()
     LoadPT2().PT2.PCI1.unregister()
