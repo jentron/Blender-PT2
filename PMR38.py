@@ -682,7 +682,7 @@ class Read_Mat(bpy.types.Operator):
         return {'RUNNING_MODAL'}    
     
         
-class Mat_Reader(bpy.types.Panel):
+class PT2_PT_Mat_Reader(bpy.types.Panel):
     bl_label = "Poser Mat Reader Panel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -748,7 +748,7 @@ def menu_func_import(self, context):
 def register():
     #bpy.utils.register_class(MatReader)
     #bpy.types.INFO_MT_file_import.append(menu_func_import)
-    bpy.utils.register_class(Mat_Reader)
+    bpy.utils.register_class(PT2_PT_Mat_Reader)
     bpy.utils.register_class(Save_Mat)
     bpy.utils.register_class(Read_Mat)
     #bpy.utils.register_class(MatPopper)
@@ -756,7 +756,7 @@ def register():
 def unregister():
     #bpy.utils.unregister_class(MatReader)
     #bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    bpy.utils.unregister_class(Mat_Reader)    
+    bpy.utils.unregister_class(PT2_PT_Mat_Reader)    
     bpy.utils.unregister_class(Save_Mat)
     bpy.utils.unregister_class(Read_Mat)    
     #bpy.utils.unregister_class(MatPopper)

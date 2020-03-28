@@ -263,10 +263,11 @@ bpy.utils.register_class(noUV)
 
 
 
-class Poser_Prop_Exporter(bpy.types.Panel):
+class PT2_PT_Poser_Prop_Exporter(bpy.types.Panel):
     bl_label = "Poser Prop Exporter"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
+#    bl_category = "Tool"
     bl_context = "scene"
  
     def draw(self, context):
@@ -1110,7 +1111,7 @@ class SaveProp(bpy.types.Operator):
  
 # registering and menu integration
 def register():
-    bpy.utils.register_class(Poser_Prop_Exporter)
+    bpy.utils.register_class(PT2_PT_Poser_Prop_Exporter)
     bpy.utils.register_class(SetPropPath)    
     bpy.utils.register_class(SetGeometryPath)      
     bpy.utils.register_class(SetTexturePath)  
@@ -1119,7 +1120,7 @@ def register():
  
 # unregistering and removing menus
 def unregister():
-    bpy.utils.unregister_class(Poser_Prop_Exporter)
+    bpy.utils.unregister_class(PT2_PT_Poser_Prop_Exporter)
     bpy.utils.unregister_class(SetPropPath)        
     bpy.utils.unregister_class(SetGeometryPath)            
     bpy.utils.unregister_class(SetTexturePath)    

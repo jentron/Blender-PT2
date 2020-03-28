@@ -321,7 +321,7 @@ class select_drive(bpy.types.Operator):
         return {'FINISHED'}          
 
         
-class Poser_Browser(bpy.types.Panel):
+class PT2_PT_Poser_Browser(bpy.types.Panel):
     bl_label = "Poser Directory Browser"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -479,7 +479,7 @@ def menu_func_import(self, context):
 
 def register():
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
-    bpy.utils.register_class(Poser_Browser)
+    bpy.utils.register_class(PT2_PT_Poser_Browser)
     bpy.utils.register_class(open_dir)
     bpy.utils.register_class(up_button)   
     bpy.utils.register_class(open_prop)       
@@ -494,7 +494,7 @@ def register():
 
 def unregister():
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    bpy.utils.unregister_class(Poser_Browser)   
+    bpy.utils.unregister_class(PT2_PT_Poser_Browser)   
     bpy.utils.unregister_class(open_dir)     
     bpy.utils.unregister_class(up_button)    
     bpy.utils.unregister_class(open_prop)       
