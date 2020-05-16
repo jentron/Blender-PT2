@@ -722,7 +722,7 @@ class LoadPoserProp(bpy.types.Operator):
             print ('=        Creating Face array                     =')
             print ('==================================================')                
             
-            mesh.uv_layers.new()
+            # mesh.uv_layers.new()
             time_start = time.time()
            
             facecount = 0
@@ -789,24 +789,36 @@ class LoadPoserProp(bpy.types.Operator):
             #  Create UV Verts
             #  Skip if no UVmap on incomming mesh
             #  
+            from random import random
             time_start = time.time()    
-            mesh.uv_layers.new()
-            facecount = 0
-            longfaces = []
-            print ('Len of textureverts:', len(textureverts))
-            for face in textureverts:
-                if len(face) > 0 and len(face) < 5:
-                    facenumber = facecount
-                    try:
-                        mesh.uv_textures[0].data[facenumber].uv1 = UVvertices[int(face[0])-1]
-                        mesh.uv_textures[0].data[facenumber].uv2 = UVvertices[int(face[1])-1]
-                        mesh.uv_textures[0].data[facenumber].uv3 = UVvertices[int(face[2])-1]
-                        if len(face) > 3:
-                            mesh.uv_textures[0].data[facenumber].uv4 = UVvertices[int(face[3])-1 ]
-                    except:
-                        pass
-
-                facecount = facecount + 1
+            uvlayer = mesh.uv_layers.new()
+            if 0: #uvlayer:
+                mesh.uv_layers.active = uvlayer
+                facecount = 0
+                longfaces = []
+                print ('Len of textureverts:', len(textureverts))
+                print(textureverts[0])
+                print(UVvertices[0])
+                for face in ob.data.polygons:
+                    for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                        ob.data.uv_layers.active.data[loop_idx].uv = UVvertices[vert_idx]
+#                        print("face idx: %i, vert idx: %i, uvs: %f, %f" % (face.index, vert_idx, uv_coords.x, uv_coords.y))
+#                 for face in textureverts:
+#                    if len(face) > 0 and len(face) < 5:
+#                        for loop_idx in range(len(face)):
+#                            print(loop_idx)
+#                            uvlayer.data[face[loop_idx]].uv = UVvertices[int(face[loop_idx])-1]
+#                        facenumber = facecount
+#                        try:
+#                        uvtexdata[facenumber].uv1 = UVvertices[int(face[0])-1]
+#                        uvtexdata[facenumber].uv2 = UVvertices[int(face[1])-1]
+#                        uvtexdata[facenumber].uv3 = UVvertices[int(face[2])-1]
+#                        if len(face) > 3:
+#                            uvtexdata[facenumber].uv4 = UVvertices[int(face[3])-1 ]
+#                        except:
+#                            pass
+#              
+#                    facecount = facecount + 1
     
             #import add_object_utils
             import bpy_extras
