@@ -792,16 +792,16 @@ class LoadPoserProp(bpy.types.Operator):
             from random import random
             time_start = time.time()    
             uvlayer = mesh.uv_layers.new()
-            if 0: #uvlayer:
+            if 1: #uvlayer:
                 mesh.uv_layers.active = uvlayer
                 facecount = 0
                 longfaces = []
                 print ('Len of textureverts:', len(textureverts))
                 print(textureverts[0])
                 print(UVvertices[0])
-                for face in ob.data.polygons:
+                for face in mesh.polygons:
                     for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-                        ob.data.uv_layers.active.data[loop_idx].uv = UVvertices[vert_idx]
+                        mesh.uv_layers.active.data[loop_idx].uv = UVvertices[vert_idx]
 #                        print("face idx: %i, vert idx: %i, uvs: %f, %f" % (face.index, vert_idx, uv_coords.x, uv_coords.y))
 #                 for face in textureverts:
 #                    if len(face) > 0 and len(face) < 5:
