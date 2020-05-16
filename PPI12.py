@@ -137,10 +137,10 @@ class LoadPoserProp(bpy.types.Operator):
     time_start = time.time()
     bl_idname = "load.poser_prop"
     bl_label = "Load Prop"
-    filename : bpy.props.StringProperty()    
+    filename : bpy.props.StringProperty()
     filename_ext = ".pp2"
 
-    filter_glob : StringProperty(default="*.pp2", options={'HIDDEN'})    
+    filter_glob : StringProperty(default="*.pp2;*.ppz", options={'HIDDEN'})
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     CPT = []
     child_parent = []
@@ -1590,7 +1590,7 @@ class LoadPoserProp(bpy.types.Operator):
 
 # Only needed if you want to add into a dynamic menu
 def menu_func_import(self, context):
-    self.layout.operator(LoadPoserProp.bl_idname, text="Poser Prop Importer")
+    self.layout.operator(LoadPoserProp.bl_idname, text="Poser Prop (.pp2/.ppz)")
 
 def register():
     bpy.utils.register_class(LoadPoserProp)
