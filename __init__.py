@@ -34,7 +34,7 @@ bl_info = {
     "location": "File > Import-Export",
     "description": "Tool for importing & exporting Poser props and characters",
     "warning": "Work in progress",
-    "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/Import-Export/Poser_Tools",
+    "wiki_url": "https://archive.blender.org/wiki/index.php/Extensions:2.6/Py/Scripts/Import-Export/Poser_Tools/",
     "category": "Import-Export"}
 
 import bpy
