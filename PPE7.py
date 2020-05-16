@@ -573,7 +573,7 @@ class SaveProp(bpy.types.Operator):
                     ###########################################            
                     # Faces
                         
-                    faces = obj.data.faces
+                    faces = obj.data.polygons
                     facecounter = 0
                     vertcounter = 0
                     matlist = mesh.materials   
