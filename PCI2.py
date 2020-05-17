@@ -149,12 +149,13 @@ class CharacterImport(bpy.types.Operator):
 
     PropArray = []
     #time_start = time.time()
-    bl_idname = "import2.poser_cr2"
+    bl_idname = "import.poser_cr2"
     bl_label = "Load Character"
     filename_ext = ".CR2"
     
     filter_glob : StringProperty(default="*.cr2", options={'HIDDEN'})    
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
+    
     
 
     def execute(self, context):
@@ -173,11 +174,12 @@ class CharacterImport(bpy.types.Operator):
                              basepath = suffix
                         else:
                             suffix = suffix + temp + '\\'
-                baspath = basepath.replace('\\\\', '\\')                        
+                basepath = basepath.replace('\\\\', '\\')                        
                 #print ('basepath:', basepath)                        
                 
             else:
-                pass 
+                basepath = ''
+                # pass 
                 # Linux path fuction
 
             return (basepath)                          
@@ -486,7 +488,7 @@ class CharacterImport(bpy.types.Operator):
         arm = bpy.data.armatures.new(cr2.name)
         import bpy_extras        
         bpy_extras.object_utils.object_data_add(context, arm, operator=None)        
-        bpy.context.scene.update() 
+        bpy.context.view_layer.update() 
         arm = bpy.context.active_object
         arm.location.x = 0
         arm.location.y = 0
@@ -670,7 +672,18 @@ class CharacterImport(bpy.types.Operator):
             print ('fullgeompath:', fullgeompath)                        
             
         else:
-            pass 
+            basepath = self.filepath
+            basepath = basepath.split('/')
+            prefix = ''
+            for temp in basepath:
+                if temp == 'Runtime':
+                    fullgeompath = prefix + cr2.geompath.replace(':', '/')
+                elif temp == '':
+                    pass
+                else:
+                    prefix = prefix + '/' + temp 
+
+            print ('fullgeompath:', fullgeompath)
             # Linux path fuction
         
         ###########################################
@@ -782,19 +795,18 @@ class CharacterImport(bpy.types.Operator):
         
         print (facearray[1])
 
-        me = bpy.data.meshes.new('Mesh')
-        #me = bpy.data.meshes.new()
-        ob = bpy.data.objects.new('MeshObject', me)
-        #ob = bpy.data.objects.new('Body', me)
-        scn = bpy.context.scene
-        scn.objects.link(ob)
-        scn.objects.active = ob
-        scn.update()             
-        me.from_pydata(cr2.geomData.verts, [], cr2.geomData.faces)
-        me.update(calc_edges=True)
-        
-        me.uv_textures.new()
+        mesh = bpy.data.meshes.new('Mesh')
+        #mesh = bpy.data.meshes.new()
+        ob = bpy.data.objects.new('MeshObject', mesh)
+        #ob = bpy.data.objects.new('Body', mesh)
+        scn = bpy.context.scene #C = bpy.context, D = bpy.data
+#        scn.objects.link(ob) D.collections['Collection 1'].objects.link(D.objects['MeshObject'])
+#        scn.objects.active = ob
+#        scn.update()             
+        bpy.context.view_layer.active_layer_collection.collection.objects.link(ob)
 
+        mesh.from_pydata(cr2.geomData.verts, [], cr2.geomData.faces)
+        mesh.update(calc_edges=True)
           
         facecount = 0
         extrafaces = []
@@ -888,7 +900,7 @@ class CharacterImport(bpy.types.Operator):
                 if g_exists == True:
                     pass
                 else:
-                    vg.new(groupname)  
+                    vg.new(name=groupname)  
                     
                 #################################
                 #
@@ -918,8 +930,8 @@ class CharacterImport(bpy.types.Operator):
                 #vg.add(vertnum, 1, 'ADD')                
                         
                         
-        me.from_pydata(verts, [], faces)
-        me.update()  
+        mesh.from_pydata(verts, [], faces)
+        mesh.update()  
         
         #vertfile.close()
         
@@ -932,23 +944,38 @@ class CharacterImport(bpy.types.Operator):
         #  Creat UV Map
         #
         ###########################################   
-        me.uv_textures.new()   
         facecount = 0
         longfaces = []
         
-        print ('Len of textureverts:', len(textureverts))
-        for face in textureverts:
-            if len(face) > 0 and len(face) < 5:
-                facenumber = facecount
-                try:
-                    me.uv_textures[0].data[facenumber].uv1 = UVvertices[int(face[0])-1]
-                    me.uv_textures[0].data[facenumber].uv2 = UVvertices[int(face[1])-1]
-                    me.uv_textures[0].data[facenumber].uv3 = UVvertices[int(face[2])-1]
-                    if len(face) > 3:
-                        me.uv_textures[0].data[facenumber].uv4 = UVvertices[int(face[3])-1 ]
-                except:
-                    pass
-            facecount = facecount + 1                  
+        #mesh.uv_textures.new()
+        uvlayer = mesh.uv_layers.new()
+        if uvlayer:
+            mesh.uv_layers.active = uvlayer
+            facecount = 0
+            longfaces = []
+            print ('Len of textureverts:', len(textureverts))
+            print(textureverts[0])
+            print(UVvertices[0])
+            for face in mesh.polygons:
+                for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                    mesh.uv_layers.active.data[loop_idx].uv = UVvertices[vert_idx]
+                    
+        import bpy_extras
+        bpy_extras.object_utils.object_data_add(context, mesh, operator=None)
+
+##        print ('Len of textureverts:', len(textureverts))
+##        for face in textureverts:
+##            if len(face) > 0 and len(face) < 5:
+##                facenumber = facecount
+##                try:
+##                    mesh.uv_textures[0].data[facenumber].uv1 = UVvertices[int(face[0])-1]
+##                    mesh.uv_textures[0].data[facenumber].uv2 = UVvertices[int(face[1])-1]
+##                    mesh.uv_textures[0].data[facenumber].uv3 = UVvertices[int(face[2])-1]
+##                    if len(face) > 3:
+##                        mesh.uv_textures[0].data[facenumber].uv4 = UVvertices[int(face[3])-1 ]
+##                except:
+##                    pass
+##            facecount = facecount + 1                  
         
 
         #for face in cr2.geomData.faces:
@@ -971,7 +998,7 @@ class CharacterImport(bpy.types.Operator):
             #bpy.mat_counter = bpy.mat_counter + 1            
             #mat_counter = bpy.mat_counter
             mat_counter = 1
-            mesh = me
+
             print ('mats[0]', mats[0])            
                                   
             #time_start = time.time()
@@ -991,7 +1018,7 @@ class CharacterImport(bpy.types.Operator):
                         mat1 = bpy.data.materials.new(mat_name)
                     
                     mat1 = bpy.data.materials[mat_name]
-                    mat1.use_transparent_shadows = True
+                  #  mat1.use_transparent_shadows = True
                     
                     ###
                     #
@@ -1511,29 +1538,29 @@ class CharacterImport(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')  
         return {'FINISHED'}
     
-    #def invoke(self, context, event):
+    def invoke(self, context, event):
         ###########################################
         #
         #  Popup Read Character / Morphs
         #
         ###########################################        
-    #    context.window_manager.fileselect_add(self)
-    #    return {'RUNNING_MODAL'}  
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}  
     
         
     
     
 # Only needed if you want to add into a dynamic menu
-#def menu_func_import(self, context):
-#    self.layout.operator(CharacterImport.bl_idname, text="Poser Character Importer")
+def menu_func_import(self, context):
+    self.layout.operator(CharacterImport.bl_idname, text="Poser Character Importer")
 
 def register():
     bpy.utils.register_class(CharacterImport)
-    #bpy.types.INFO_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 def unregister():
     bpy.utils.unregister_class(CharacterImport)
-    #bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 
 if __name__ == "__main__":
     register()    
