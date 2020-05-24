@@ -957,8 +957,11 @@ class CharacterImport(bpy.types.Operator):
             print(textureverts[0])
             print(UVvertices[0])
             for face in mesh.polygons:
+                k=0
                 for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-                    mesh.uv_layers.active.data[loop_idx].uv = UVvertices[vert_idx]
+                    textureindex = int(textureverts[face.index][k])-1
+                    mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
+                    k+=1
                     
         import bpy_extras
         bpy_extras.object_utils.object_data_add(context, mesh, operator=None)
