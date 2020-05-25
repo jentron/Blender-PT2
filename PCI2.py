@@ -78,7 +78,7 @@
 #########################################################
 
 import bpy
-#import time
+import time
 import sys
 import os
 from bpy_extras import *
@@ -243,7 +243,7 @@ class CharacterImport(bpy.types.Operator):
                #print ('actor:', tempstr)
                if len(cr2.bones) > 0:
                    for bone in cr2.bones:
-                       #print (bone.name)
+                       #print ('bone.name:', bone.name)
                        if bone.name == tempstr:
                            skipcheck = True
                            #print (skipcheck)
@@ -1004,7 +1004,7 @@ class CharacterImport(bpy.types.Operator):
 
             print ('mats[0]', mats[0])            
                                   
-            #time_start = time.time()
+            time_start = time.time()
             for mat in mats:
                 mat_name = mat[0]
                 mesh_name = mesh.name
@@ -1021,8 +1021,9 @@ class CharacterImport(bpy.types.Operator):
                         mat1 = bpy.data.materials.new(mat_name)
                     
                     mat1 = bpy.data.materials[mat_name]
-                  #  mat1.use_transparent_shadows = True
-                    
+                    ## mat1.use_transparent_shadows = True #OBSOLETE
+                    mat1.use_nodes = True
+
                     ###
                     #
                     #  Set material Color values
@@ -1033,31 +1034,31 @@ class CharacterImport(bpy.types.Operator):
                     if info.startswith('KdColor ') is True:
                         tempstr = info.lstrip('KdColor ')
                         array = [float(s) for s in tempstr.split()]
-                        if len(array) > 3:
-                            array.remove(array[3])
-                        mat1.diffuse_color = array
+                        if len(array) < 3:
+                            array[3] = 0
+                        mat1.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = array
                         
-                    #  Specular Color
-                    if info.startswith('KsColor ') is True:
-                        tempstr = info.lstrip('KsColor ')
-                        array = [float(s) for s in tempstr.split()]
-                        if len(array) > 3:
-                            array.remove(array[3])
-                        mat1.specular_color = array
-
-                    #  Reflection Strength
-                    if info.startswith('reflectionStrength ') is True:
-                        tempstr = info.replace('reflectionStrength ', '')
-                        tempstr = tempstr.strip()
-                        mat1.raytrace_mirror.reflect_factor = float(tempstr)
-                        
-                    if info.startswith('tMax ') is True:
-                        tempstr = info.replace('tMax ','')
-                        tempstr = tempstr.strip()
-                        if float(tempstr) > 0:
-                            transparency = 1 - float(tempstr)
-                            mat1.use_transparency = True
-                            mat1.alpha = transparency
+#                    #  Specular Color
+#                    if info.startswith('KsColor ') is True:
+#                        tempstr = info.lstrip('KsColor ')
+#                        array = [float(s) for s in tempstr.split()]
+#                        if len(array) > 3:
+#                            array.remove(array[3])
+#                        mat1.specular_color = array
+#
+#                    #  Reflection Strength
+#                    if info.startswith('reflectionStrength ') is True:
+#                        tempstr = info.replace('reflectionStrength ', '')
+#                        tempstr = tempstr.strip()
+#                        mat1.raytrace_mirror.reflect_factor = float(tempstr)
+#                        
+#                    if info.startswith('tMax ') is True:
+#                        tempstr = info.replace('tMax ','')
+#                        tempstr = tempstr.strip()
+#                        if float(tempstr) > 0:
+#                            transparency = 1 - float(tempstr)
+#                            mat1.use_transparency = True
+#                            mat1.alpha = transparency
                         
                     #############################################################
                     #
@@ -1076,10 +1077,14 @@ class CharacterImport(bpy.types.Operator):
                     
                     contentloc = str(getbasepath(self.filepath))
                     #print ('contentloc:', contentloc)   
-
-                    
+                    from . import GetStringRes
+                    import re
                     if info.startswith('textureMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=info.lstrip('textureMap ')
+                        tempstr = tempstr.strip('"')
+                        if tempstr.startswith('GetStringRes') is True:
+                            cmd, lib, lin, foo = re.split("[(,)]", tempstr)
+                            tempstr = GetStringRes.stringResourceList[int(lib)][int(lin)]
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
@@ -1097,16 +1102,16 @@ class CharacterImport(bpy.types.Operator):
                             else:                    
                                 # Sometimes yes:  Sometimes no?:
                                 #texturepath = '\\'.join(contentloc) + '\\Runtime\\textures' + tempstr
-                                texturepath = contentloc + 'Runtime\\textures\\' + tempstr
+                                texturepath = contentloc + 'Runtime\\Textures\\' + tempstr
                                 
                             #print ('tempstr:', tempstr)
                             #print ('950:texturepath:', texturepath)                                
                         else:                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
+                            if tempstr.__contains__('Textures') is True or tempstr.__contains__('Textures') is True:
                                 texturepath = '/'.join(contentloc) + tempstr
                             else:                    
                                 # Sometimes yes:  Sometimes no?:
-                                texturepath = '/'.join(contentloc) + '/Runtime/textures' + tempstr
+                                texturepath = '/'.join(contentloc) + '/Runtime/Textures/' + tempstr
                                     
     
                         #######################################            
@@ -1439,7 +1444,7 @@ class CharacterImport(bpy.types.Operator):
                 
                 #print ('\n')
                 #print ('==================================================')
-                #print ('=         Assinging Faces to Materials           =')
+                #print ('=         Assigning Faces to Materials           =')
                 #print ('==================================================')    
                 
                 #print ('len of face_mat:', len(face_mat))
@@ -1449,9 +1454,9 @@ class CharacterImport(bpy.types.Operator):
                     for mat in mesh.materials:
                         skip = 1
                         if mat.name == face[1]:
-                            mesh.tessfaces[face[0]].material_index = mat_count
+                            mesh.polygons[face[0]].material_index = mat_count
                         mat_count = mat_count + 1
-                
+
 ##########################################################
 ##########################################################
         
