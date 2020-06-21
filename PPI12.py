@@ -457,7 +457,8 @@ class LoadPoserProp(bpy.types.Operator):
                 elif x.startswith('v ') is True:
                     #print (x)
                     tempvert = x.lstrip('v ')
-                    array = [float(s) for s in tempvert.split()]
+                    temp_array = [float(s) for s in tempvert.split()]
+                    array = [temp_array[0], -temp_array[2], temp_array[1]]  #hardcode Y Z swap
                     verts.append(array)
                     
                 elif x.startswith('usemtl ') is True:
@@ -501,7 +502,7 @@ class LoadPoserProp(bpy.types.Operator):
                      tempstring = tempstring.lstrip('origin ')
                      tempstring = tempstring.split()
                      print ('tempstring:', tempstring)
-                     obj_origin = (float(tempstring[0]), float(tempstring[1]), float(tempstring[2]))
+                     obj_origin = (float(tempstring[0]), -float(tempstring[2]), float(tempstring[1])) #hardcode Y Z swap
                      print ('Origin:', obj_origin)
                      origin_list.append([prop_name, obj_origin])
 
@@ -517,13 +518,13 @@ class LoadPoserProp(bpy.types.Operator):
                      xrotatecheck = False
                      xrotate = float(x.split()[2])
                      rotationtemp[1] = xrotate
-                elif x.startswith('rotateY ') is True:
+                elif x.startswith('rotateZ ') is True: #hardcode Y Z swap
                      yrotatecheck = True
                 elif x.startswith('k ') is True and yrotatecheck == True:
                      yrotatecheck = False
                      yrotate = float(x.split()[2])
                      rotationtemp[2] = yrotate
-                elif x.startswith('rotateZ ') is True:
+                elif x.startswith('rotateY ') is True: #hardcode Y Z swap
                      zrotatecheck = True
                 elif x.startswith('k ') is True and zrotatecheck == True:
                      zrotatecheck = False
@@ -541,13 +542,13 @@ class LoadPoserProp(bpy.types.Operator):
                      xscalecheck = False
                      xscaleamount = float(x.split()[2])
                      scaletemp[1] = xscaleamount
-                elif x.startswith('propagatingScaleY ') is True:
+                elif x.startswith('propagatingScaleZ ') is True: #hardcode Y Z swap
                      yscalecheck = True
                 elif x.startswith('k ') is True and yscalecheck == True:
                      yscalecheck = False
                      yscaleamount = float(x.split()[2])
                      scaletemp[2] = yscaleamount
-                elif x.startswith('propagatingScaleZ ') is True:
+                elif x.startswith('propagatingScaleY ') is True: #hardcode Y Z swap
                      zscalecheck = True
                 elif x.startswith('k ') is True and zscalecheck == True:
                      zscalecheck = False
@@ -561,12 +562,12 @@ class LoadPoserProp(bpy.types.Operator):
             #  Location Translations from parents' origin
             #   
 
-                elif x.startswith('translateY ') is True:
+                elif x.startswith('translateZ ') is True: #hardcode Y Z swap
                      ytranscheck = True
                 elif x.startswith('k ') is True and ytranscheck == True:
                      ytranscheck = False
-                     ytransamount = float(x.split()[2])
-                elif x.startswith('translateZ ') is True:
+                     ytransamount = -float(x.split()[2])
+                elif x.startswith('translateY ') is True: #hardcode Y Z swap
                      ztranscheck = True
                 elif x.startswith('k ') is True and ztranscheck == True:
                      ztranscheck = False
@@ -588,14 +589,14 @@ class LoadPoserProp(bpy.types.Operator):
                      xoffsetb = False
                      print (x)
                      xoffsetbamount = float(x.split()[1])
-                elif x.startswith('yOffsetB ') is True:
+                elif x.startswith('zOffsetB ') is True: #hardcode Y Z swap
                      yoffsetb = True
                      #print (x)
                 elif x.startswith('initValue ') is True and yoffsetb == True:
                      yoffsetb = False
                      print (x)
-                     yoffsetbamount = float(x.split()[1])
-                elif x.startswith('zOffsetB ') is True:
+                     yoffsetbamount = -float(x.split()[1])
+                elif x.startswith('yOffsetB ') is True: #hardcode Y Z swap
                      zoffsetb = True
                      #print (x)
                 elif x.startswith('initValue ') is True and zoffsetb == True:
@@ -1403,13 +1404,13 @@ class LoadPoserProp(bpy.types.Operator):
                         y.append(xtran)
                 transxcheck = 0    
                 
-            if x.startswith('\t\ttranslateY ') is True:
+            if x.startswith('\t\ttranslateZ ') is True: #hardcode Y Z swap
                 transycheck = 1
                 
             if x.startswith('\t\t\t\tk ') is True and transycheck == 1:
                 ytran = x.strip().replace('k ', '')
                 ytran = ytran.strip().split()
-                ytran = float(ytran[1])
+                ytran = -float(ytran[1])
                 for y in proparray:
                     if y[0] == prop:
                         if len(y) == 1:
@@ -1417,7 +1418,7 @@ class LoadPoserProp(bpy.types.Operator):
                         y.append(ytran)
                 transycheck = 0   
                 
-            if x.startswith('\t\ttranslateZ ') is True:
+            if x.startswith('\t\ttranslateY ') is True: #hardcode Y Z swap
                 transzcheck = 1
                 
             if x.startswith('\t\t\t\tk ') is True and transzcheck == 1:
@@ -1442,11 +1443,11 @@ class LoadPoserProp(bpy.types.Operator):
         for x in proparray:
             counter = counter + 1
             print ('Counter:', counter)
-            print (x[0])
-            print (x[0], 'offsetb:', x[5], x[6], x[7])
-            adjustvert(x[0], x[5], x[6], x[7])
-            #adjustvert(x[0], x[2], x[3], x[4])
-            adjustorigin(x[0], x[2], x[3], x[4])
+            print (x[0], 'offsetb:', x[5], -x[7], x[6])  #hardcode Y Z swap
+            print (x[0], 'origin: ', x[2], -x[4], x[3])  #hardcode Y Z swap
+            adjustvert(x[0], x[5], -x[7], x[6]) #hardcode Y Z swap
+            #adjustvert(x[0], x[2], x[3], x[4]) 
+            adjustorigin(x[0], x[2], -x[4], x[3]) #hardcode Y Z swap
             print ('x[1]', x[1])
             objslist = bpy.data.objects
             
@@ -1463,7 +1464,7 @@ class LoadPoserProp(bpy.types.Operator):
                 while offsearch == 1:
                     for z in proparray:
                         if z[0] == parent:
-                            adjustorigin(x[0], z[2], z[3], z[4]) 
+                            adjustorigin(x[0], z[2], z[3], z[4])
                             parent = z[1]
                     if parent == 'no parent':
                         offsearch = 0
@@ -1533,7 +1534,10 @@ class LoadPoserProp(bpy.types.Operator):
         print ('==================================================')    
 
         # Rotation
-        degr = (3.14*2) / 360
+        # degr = (3.14*2) / 360 better to hard-code more exact values
+        degr = 0.017453292519943295
+        pihalf = 1.5707963267948966
+        
         print ('--------------------------------------------------------')
         print ('Rotating:')
         for x in rotationlist:
@@ -1569,9 +1573,11 @@ class LoadPoserProp(bpy.types.Operator):
                 #print (x[0])
                 #print (dir(x[0]))
                 if check_prop.parent == None:
-                   check_prop.delta_rotation_euler = (1.57, 0, 0)
+                   # check_prop.delta_rotation_euler = (pihalf, 0, 0)
+                   pass
         else:
-             newobj.delta_rotation_euler = (1.57, 0, 0)  
+             # newobj.delta_rotation_euler = (pihalf, 0, 0)  
+             pass
         ###########################################################
   
 
