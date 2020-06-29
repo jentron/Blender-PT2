@@ -946,22 +946,22 @@ class CharacterImport(bpy.types.Operator):
         ###########################################   
         facecount = 0
         longfaces = []
-        
+        if( len(UVvertices) > 0 ):
         #mesh.uv_textures.new()
-        uvlayer = mesh.uv_layers.new()
-        if uvlayer:
-            mesh.uv_layers.active = uvlayer
-            facecount = 0
-            longfaces = []
-            print ('Len of textureverts:', len(textureverts))
-            print(textureverts[0])
-            print(UVvertices[0])
-            for face in mesh.polygons:
-                k=0
-                for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-                    textureindex = int(textureverts[face.index][k])-1
-                    mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
-                    k+=1
+            uvlayer = mesh.uv_layers.new()
+            if uvlayer:
+                mesh.uv_layers.active = uvlayer
+                facecount = 0
+                longfaces = []
+                #print ('Len of textureverts:', len(textureverts))
+                #print(textureverts[0])
+                #print(UVvertices[0])
+                for face in mesh.polygons:
+                    k=0
+                    for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                        textureindex = int(textureverts[face.index][k])-1
+                        mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
+                        k+=1
                     
         import bpy_extras
         bpy_extras.object_utils.object_data_add(context, mesh, operator=None)

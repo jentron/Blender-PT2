@@ -841,22 +841,23 @@ class LoadPoserProp(bpy.types.Operator):
             #  Create UV Verts
             #  Skip if no UVmap on incomming mesh
             #  
-            from random import random
+#            from random import random
             time_start = time.time()    
-            uvlayer = mesh.uv_layers.new()
-
-            mesh.uv_layers.active = uvlayer
-            facecount = 0
-            longfaces = []
-#                print ('Len of textureverts:', len(textureverts))
-#                print(textureverts[0])
-#                print(UVvertices[0])
-            for face in mesh.polygons:
-                k=0
-                for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-                    textureindex = int(textureverts[face.index][k])-1
-                    mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
-                    k+=1
+            ## print ('Len of textureverts:', len(textureverts))
+            ## print(textureverts[0])
+            ## print(UVvertices[0])
+            if( len(UVvertices) > 0 ):
+                uvlayer = mesh.uv_layers.new()
+    
+                mesh.uv_layers.active = uvlayer
+                facecount = 0
+                longfaces = []
+                for face in mesh.polygons:
+                    k=0
+                    for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                        textureindex = int(textureverts[face.index][k])-1
+                        mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
+                        k+=1
 
             import bpy_extras
             bpy_extras.object_utils.object_data_add(context, mesh, operator=None)
