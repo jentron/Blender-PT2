@@ -48,14 +48,25 @@ import gzip
 from pathlib import Path
 import errno
 
+# Convenience Imports:
+from mathutils import *
+from math import *
+
 from bpy_extras import *
 from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 print ('\n')
-print ('--- Starting Poser Prop Importer Version 12 ---')
+print ('--- Starting Poser Prop Importer Version 14 ---')
 systemType = sys.platform
 print ('System Type:', systemType)
+
+class Morph:
+    def __init__(self):
+        self.data=[]
+        self.min = 0
+        self.max = 1
+        self.name = 'shape'
 
 def PPI_open(name, mode):
     is_gzip=True
@@ -159,6 +170,7 @@ class LoadPoserProp(bpy.types.Operator):
         time_start = time.time()
         file = PPI_open(self.filepath, 'rt')
         objcounts = []
+        morphcounts = []
         for x in file:
             #PropArray.append(x.strip())
             # check for geom path here
@@ -166,8 +178,15 @@ class LoadPoserProp(bpy.types.Operator):
                tempstr = x.strip()
                if objcounts.__contains__(tempstr) is False:
                   objcounts.append(tempstr)
+
+            if x.strip().startswith('targetGeom ') is True:
+               tempstr = x.strip()
+               if morphcounts.__contains__(tempstr) is False:
+                  morphcounts.append(tempstr)
+
         print ('Time to read file:', time.time()-time_start)
         print ('Number of Props:', len(objcounts))
+        print ('Number of Morphs:', len(morphcounts))
         file.close()
 
 
@@ -395,6 +414,10 @@ class LoadPoserProp(bpy.types.Operator):
             current_mat = 'No Mat'
             face_mat = []
             textureverts = []
+            morphs = []
+            morph = Morph()
+            morphloop = 0
+            current_morph = ''
             prop_name = ''
             ytranscheck = False
             ytransamount = 0
@@ -486,6 +509,34 @@ class LoadPoserProp(bpy.types.Operator):
                     temparray2.append(temparray1[0])
                     temparray2.append(temparray1[1])
                     UVvertices.append(temparray2)
+            ##########################################################
+            #  Morph Targets.
+            #
+                elif x.startswith('targetGeom ') is True:
+                    morph.name = x.lstrip('targetGeom ')
+                    morphloop = 1
+                    # print ("Morph:", morph.name )
+                elif x.startswith('k ') is True and morphloop > 0:
+                     morph.amount = float(x.split()[2])
+                elif x.startswith('min ') is True and morphloop > 0:
+                     morph.min = float(x.split()[1])
+                elif x.startswith('max ') is True and morphloop > 0:
+                     morph.max = float(x.split()[1])
+                elif x.startswith('d ') is True and morphloop > 0:
+                    # print('d', x)
+                    tempmorph = x.lstrip('d ')
+                    i, dx, dy, dz = [float(s) for s in tempmorph.split()]
+                    morph.data.append( { int(i) : Vector( (dx, dy, dz) ) } )
+                #need to keep track of brackets in here, and the opening bracket is counted twice.
+                elif x.startswith ('{') and morphloop > 0:
+                    morphloop += 1
+                elif x.startswith ('}') and morphloop > 2:
+                    morphloop -= 1
+                elif x.startswith ('}') and morphloop == 2:
+                    morphloop = 0
+                    morphs.append(morph)
+                    morph = Morph()
+
             ##########################################################
             #  Check for parent.
             #
@@ -824,6 +875,32 @@ class LoadPoserProp(bpy.types.Operator):
             print ('Origin:', obj_origin)
             newobj.location = obj_origin
 
+            ##########################################################################
+            #
+            #  Morphs
+            # 
+            
+            print ('\n')
+            print ('==================================================')
+            print ('=         Creating Shapekeys                     =')
+            print ('==================================================')    
+            mtrx_swap = Matrix( ((1,0,0,0),(0,0,-1,0),(0,1,0,0),(0,0,0,1)) )
+
+            if( len(morphs) > 0):
+                sk_basis = newobj.shape_key_add(name="Basis")
+                newobj.data.shape_keys.use_relative = True
+            for morph in morphs:
+                print ("Morph:", morph.name, "Size:", len(morph.data) )
+                sk = newobj.shape_key_add(name=morph.name)
+                sk.value = morph.amount
+                sk.slider_min = morph.min
+                sk.slider_max = morph.max
+                
+                # position each vert FIXME: there must be a better way...
+                for d in morph.data:
+                    for i, v in d.items():
+                        sk.data[i].co = sk_basis.data[i].co + mtrx_swap @ Vector(v) 
+    
 
 
             ##########################################################################
