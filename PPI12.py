@@ -400,6 +400,11 @@ class LoadPoserProp(bpy.types.Operator):
           rotationlist = []
           scalelist = []
 
+          mtrx_swap = Matrix((( 1, 0, 0, 0),
+                              ( 0, 0,-1, 0),
+                              ( 0, 1, 0, 0),
+                              ( 0, 0, 0, 1)) )
+
 
           for PropArray in total_props:
             #print ('255:PropArray', PropArray)
@@ -481,6 +486,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #print (x)
                     tempvert = x.lstrip('v ')
                     temp_array = [float(s) for s in tempvert.split()]
+                    # array = Vector(temp_array) @ mtrx_swap
                     array = [temp_array[0], -temp_array[2], temp_array[1]]  #hardcode Y Z swap
                     verts.append(array)
                     
@@ -554,6 +560,7 @@ class LoadPoserProp(bpy.types.Operator):
                      tempstring = tempstring.split()
                      print ('tempstring:', tempstring)
                      obj_origin = (float(tempstring[0]), -float(tempstring[2]), float(tempstring[1])) #hardcode Y Z swap
+                     # obj_origin = Vector( (float(tempstring[0]), float(tempstring[1]), float(tempstring[2])) ) @ mtrx_swap
                      print ('Origin:', obj_origin)
                      origin_list.append([prop_name, obj_origin])
 
@@ -885,23 +892,22 @@ class LoadPoserProp(bpy.types.Operator):
             print ('==================================================')
             print ('=         Creating Shapekeys                     =')
             print ('==================================================')    
-            mtrx_swap = Matrix( ((1,0,0,0),(0,0,-1,0),(0,1,0,0),(0,0,0,1)) )
 
             if( len(morphs) > 0):
                 sk_basis = newobj.shape_key_add(name="Basis")
-                newobj.data.shape_keys.use_relative = True
-            for morph in morphs:
-                print ("Morph:", morph.name, "Size:", len(morph.data) )
-                sk = newobj.shape_key_add(name=morph.name)
-                sk.value = morph.amount
-                sk.slider_min = morph.min
-                sk.slider_max = morph.max
-                
-                # position each vert FIXME: there must be a better way...
-                for d in morph.data:
-                    for i, v in d.items():
-                        sk.data[i].co = sk_basis.data[i].co + mtrx_swap @ Vector(v) 
-    
+                newobj.data.shape_keys.use_relative = False
+                for morph in morphs:
+                    print ("Morph:", morph.name, "Size:", len(morph.data) )
+                    sk = newobj.shape_key_add(name=morph.name)
+                    sk.value = morph.amount
+                    sk.slider_min = morph.min
+                    sk.slider_max = morph.max
+                    
+                    # position each vert FIXME: there must be a better way...
+                    for d in morph.data:
+                        for i, v in d.items():
+                            sk.data[i].co = sk_basis.data[i].co + mtrx_swap @ v 
+                    newobj.data.shape_keys.use_relative = True
 
 
             ##########################################################################
@@ -1524,7 +1530,6 @@ class LoadPoserProp(bpy.types.Operator):
             print (x[0], 'offsetb:', x[5], -x[7], x[6])  #hardcode Y Z swap
             print (x[0], 'origin: ', x[2], -x[4], x[3])  #hardcode Y Z swap
             adjustvert(x[0], x[5], -x[7], x[6]) #hardcode Y Z swap
-            #adjustvert(x[0], x[2], x[3], x[4]) 
             adjustorigin(x[0], x[2], -x[4], x[3]) #hardcode Y Z swap
             print ('x[1]', x[1])
             objslist = bpy.data.objects
