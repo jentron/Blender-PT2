@@ -6,3 +6,6 @@ The original Poser Tools allowed Blender 2.61 to import Props, Characters, and M
 I have a lot of old Poser content and thought it would be nifty to resurect this project for Blender 2.8x
 
 How far will I get?
+
+# To INSTALL
+Please rename the folder from Blender-PT2 to just PT2 and then import as any other Blender add-on
