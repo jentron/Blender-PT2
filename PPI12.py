@@ -44,9 +44,9 @@ import time
 import sys
 import os
 import re
-import gzip
-from pathlib import Path
 import errno
+
+from . import PT2_Library as ptl
 
 # Convenience Imports:
 from mathutils import *
@@ -67,37 +67,6 @@ class Morph:
         self.min = 0
         self.max = 1
         self.name = 'shape'
-
-def PPI_open(name, mode):
-    is_gzip=True
-    
-    myfile=Path(name)
-    #print("Test Existance")
-    if( myfile.exists() ):
-        print(f"%s exists!"%myfile)
-        new_file=myfile
-    else:
-        stem = list(myfile.suffix)
-        print(stem)
-        stem[-1] = 'z'
-        new_file = Path(myfile.parents[0],  myfile.stem + "".join(stem))
-
-    if( new_file.exists()):
-        pass
-    else:
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), p)
-
-    with gzip.open(new_file, 'r') as fh:
-        try:
-            fh.read(1)
-        except OSError:
-            print(f'%s is not a gzip file by OSError'%new_file)
-            is_gzip=False
-    
-    if(is_gzip):
-        return( gzip.open(new_file, mode))
-
-    return( open(new_file, mode))
 
 def adjustvert(objmesh, x, y, z):
     print (objmesh, x,y,z)
@@ -168,7 +137,7 @@ class LoadPoserProp(bpy.types.Operator):
         # Scan for multi obj's first:
         # 
         time_start = time.time()
-        file = PPI_open(self.filepath, 'rt')
+        file = ptl.PT2_open(self.filepath, 'rt')
         objcounts = []
         morphcounts = []
         for x in file:
@@ -246,7 +215,7 @@ class LoadPoserProp(bpy.types.Operator):
             print ('=       len of objcounts < 2                     =')
             print ('==================================================')    
        
-            file = PPI_open(self.filepath, 'rt')
+            file = ptl.PT2_open(self.filepath, 'rt')
             time_start = time.time()
             for x in file:
                 PropArray.append(x.strip())
@@ -281,7 +250,7 @@ class LoadPoserProp(bpy.types.Operator):
             #         
             if geompath > '':
                 try:
-                    file = PPI_open(geompath, 'rt')
+                    file = ptl.PT2_open(geompath, 'rt')
                     for x in file:
                         PropArray.append(x.strip())           
                     file.close()                        
@@ -313,7 +282,7 @@ class LoadPoserProp(bpy.types.Operator):
             current_prop = ''
 
             PropArray = []
-            file = PPI_open(self.filepath, 'rt')
+            file = ptl.PT2_open(self.filepath, 'rt')
             objcounter = 1
             proploop = False
             currentPropArray = []
@@ -353,7 +322,7 @@ class LoadPoserProp(bpy.types.Operator):
                         subpath = subpath.replace(':', '\\')                
                         geompath = '\\'.join(contentloc) + subpath
                         try:
-                            file = PPI_open(geompath, 'rt')
+                            file = ptl.PT2_open(geompath, 'rt')
                             for x in file:
                                 PropArray.append(x.strip())           
                             file.close()                        
@@ -373,7 +342,7 @@ class LoadPoserProp(bpy.types.Operator):
                            #print (x)
                        
                        try:
-                           file = PPI_open(geompath, 'rt')
+                           file = ptl.PT2_open(geompath, 'rt')
                            for x in file:
                                PropArray.append(x.strip())           
                            file.close()                        
@@ -1381,7 +1350,7 @@ class LoadPoserProp(bpy.types.Operator):
         print ('==================================================')    
 
         
-        file = PPI_open(self.filepath, 'rt')        
+        file = ptl.PT2_open(self.filepath, 'rt')        
         
         '''
         prop name, parent, prop's offsetb

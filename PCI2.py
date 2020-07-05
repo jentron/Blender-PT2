@@ -84,6 +84,7 @@ import os
 from bpy_extras import *
 from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
+from . import PT2_Library as ptl
 
 print ('\n')
 print ('--- Starting Poser Character Importer Version 2 ---')
@@ -702,9 +703,9 @@ class CharacterImport(bpy.types.Operator):
         current_group = ''
 
 
-        file3 = open(fullgeompath, 'r')
+        file3 = ptl.PT2_open(fullgeompath, 'r')
         #print ('Pre-655 check')
-        #linecount = 0
+        #linecount = 1
         for temp in file3:
             #print ('line:', linecount, 'temp:', temp)
             #linecount += 1
