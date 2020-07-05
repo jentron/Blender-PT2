@@ -1,5 +1,6 @@
 import gzip
 from pathlib import Path
+import re
 
 def PT2_open(name, mode):
     is_gzip=True
@@ -31,3 +32,7 @@ def PT2_open(name, mode):
         return( gzip.open(new_file, mode))
 
     return( open(new_file, mode))
+
+def namecheck01(input):
+    output = re.sub(r' *: *[0-9]+', '', input)
+    return( output )

@@ -81,6 +81,7 @@ import bpy
 import time
 import sys
 import os
+
 from bpy_extras import *
 from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
@@ -154,7 +155,7 @@ class CharacterImport(bpy.types.Operator):
     bl_label = "Load Character"
     filename_ext = ".CR2"
     
-    filter_glob : StringProperty(default="*.cr2", options={'HIDDEN'})    
+    filter_glob : StringProperty(default="*.cr2;*.crz", options={'HIDDEN'})    
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     
     
@@ -215,15 +216,7 @@ class CharacterImport(bpy.types.Operator):
         CharName = 'TestFigure'
         print ('CharName:', CharName)
         
-        def namecheck01(input):
-            if input.strip().endswith(':1'):
-                output = input.strip().replace(':1', '')        
-            else:
-                output = input
-            return(output) 
-
-        
-        file = open(self.filepath, 'rt')
+        file = ptl.PT2_open(self.filepath, 'rt')
         #data = open('/media/disk/armData.txt','w')
         cr2.bones = []
 
@@ -240,7 +233,7 @@ class CharacterImport(bpy.types.Operator):
                tempstr = x.strip()
                tempstr = tempstr.replace('actor ', '')
                skipcheck = False
-               tempstr = namecheck01(tempstr)
+               tempstr = ptl.namecheck01(tempstr)
                #print ('actor:', tempstr)
                if len(cr2.bones) > 0:
                    for bone in cr2.bones:
@@ -253,7 +246,7 @@ class CharacterImport(bpy.types.Operator):
                   cr2.bones.append(cr2.boneData())
                   bonecount = len(cr2.bones)                  
                   thisbone = cr2.bones[bonecount-1]
-                  tempstr = namecheck01(tempstr)
+                  tempstr = ptl.namecheck01(tempstr)
                   thisbone.name = tempstr
                    
             ##############################
@@ -285,14 +278,14 @@ class CharacterImport(bpy.types.Operator):
         #  Re-open file
         #
         
-        file = open(self.filepath, 'rt')
+        file = ptl.PT2_open(self.filepath, 'rt')
         figureCheck = False         
         for x in file:
             if x.strip().startswith('actor '):
                 tempstr = x.strip().replace('actor ', '')
 
                 for bone in cr2.bones:
-                    tempstr = namecheck01(tempstr)
+                    tempstr = ptl.namecheck01(tempstr)
                     if bone.name == tempstr:
                         currentbone = bone
                         outstr = str(currentbone.name) + ':'
@@ -315,7 +308,7 @@ class CharacterImport(bpy.types.Operator):
             if x.strip().startswith('parent '):
                 #print (x)
                 tempstr = x.strip().replace('parent ', '')
-                tempstr = namecheck01(tempstr)
+                tempstr = ptl.namecheck01(tempstr)
                 currentbone.parent = tempstr    
             if x.strip().startswith('orientation '):
                 #print (x)
