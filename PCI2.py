@@ -223,7 +223,7 @@ class CharacterImport(bpy.types.Operator):
             return(output) 
 
         
-        file = open(self.filepath, 'r')
+        file = open(self.filepath, 'rt')
         #data = open('/media/disk/armData.txt','w')
         cr2.bones = []
 
@@ -285,7 +285,7 @@ class CharacterImport(bpy.types.Operator):
         #  Re-open file
         #
         
-        file = open(self.filepath, 'r')
+        file = open(self.filepath, 'rt')
         figureCheck = False         
         for x in file:
             if x.strip().startswith('actor '):
@@ -703,7 +703,7 @@ class CharacterImport(bpy.types.Operator):
         current_group = ''
 
 
-        file3 = ptl.PT2_open(fullgeompath, 'r')
+        file3 = ptl.PT2_open(fullgeompath, 'rt')
         #print ('Pre-655 check')
         #linecount = 1
         for temp in file3:

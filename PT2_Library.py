@@ -20,7 +20,7 @@ def PT2_open(name, mode):
     else:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), p)
 
-    with gzip.open(new_file, 'r') as fh:
+    with gzip.open(new_file, mode) as fh:
         try:
             fh.read(1)
         except OSError:
