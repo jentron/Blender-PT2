@@ -82,6 +82,10 @@ import time
 import sys
 import os
 
+# Convenience Imports:
+from mathutils import *
+from math import *
+
 from bpy_extras import *
 from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
@@ -138,8 +142,14 @@ class CR2Class():
                 value=xyz*5
                 return(value)        
    
+class Morph:
+    def __init__(self):
+        self.data=[]
+        self.min = 0
+        self.max = 1
+        self.name = 'shape'
 
-
+        
 ###########################################
 #
 #  Import Character Class
@@ -157,7 +167,6 @@ class CharacterImport(bpy.types.Operator):
     
     filter_glob : StringProperty(default="*.cr2;*.crz", options={'HIDDEN'})    
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
-    
     
 
     def execute(self, context):
@@ -219,6 +228,7 @@ class CharacterImport(bpy.types.Operator):
         file = ptl.PT2_open(self.filepath, 'rt')
         #data = open('/media/disk/armData.txt','w')
         cr2.bones = []
+        morphcounts = []
 
         for x in file:
 
@@ -248,13 +258,19 @@ class CharacterImport(bpy.types.Operator):
                   thisbone = cr2.bones[bonecount-1]
                   tempstr = ptl.namecheck01(tempstr)
                   thisbone.name = tempstr
-                   
+
+            elif x.strip().startswith('targetGeom ') is True:
+               tempstr = x.strip()
+               if morphcounts.__contains__(tempstr) is False:
+                  morphcounts.append(tempstr)
+
+                  
             ##############################
             #
             # geompath
             #
 
-            if x.strip().startswith('figureResFile ') is True:
+            elif x.strip().startswith('figureResFile ') is True:
                 #print (x)
                 tempstr = x.strip()
                 tempstr = tempstr.replace('figureResFile ', '')
@@ -262,6 +278,7 @@ class CharacterImport(bpy.types.Operator):
                 #print ('GeomFile:', character.geompath)
         
         file.close()  
+        print ('Number of Morphs:', len(morphcounts))
         #print ('=======')
         #for bone in cr2.bones:
         #    print (bone.name)
@@ -272,7 +289,14 @@ class CharacterImport(bpy.types.Operator):
         matloop = 0
         mat_counter = 'NA '
         current_mat = 'No Mat'        
-        
+        morphs = []
+        morph = Morph()
+        morphloop = 0
+        current_morph = ''
+        mtrx_swap = Matrix((( 1, 0, 0, 0),
+                            ( 0, 1, 0, 0),
+                            ( 0, 0, 1, 0),
+                            ( 0, 0, 0, 1)) )
         ###############################
         #
         #  Re-open file
@@ -280,7 +304,9 @@ class CharacterImport(bpy.types.Operator):
         
         file = ptl.PT2_open(self.filepath, 'rt')
         figureCheck = False         
-        for x in file:
+
+
+        for x in file: # FIXME: Why don't we .strip() here instead of at every level below?
             if x.strip().startswith('actor '):
                 tempstr = x.strip().replace('actor ', '')
 
@@ -293,24 +319,24 @@ class CharacterImport(bpy.types.Operator):
             ###############################################                        
                         
             
-            if x.strip().startswith('angles '):
+            elif x.strip().startswith('angles '):
                 tempstr = x.strip().replace('angles ', '')
                 currentbone.angles = tempstr                                
                 
-            if x.strip().startswith('origin '):
+            elif x.strip().startswith('origin '):
                 tempstr = x.strip().replace('origin ', '')
                 currentbone.origin = tempstr
                 
-            if x.strip().startswith('endPoint '):
+            elif x.strip().startswith('endPoint '):
                 #print (x)
                 tempstr = x.strip().replace('endPoint ', '')
                 currentbone.endpoint = tempstr   
-            if x.strip().startswith('parent '):
+            elif x.strip().startswith('parent '):
                 #print (x)
                 tempstr = x.strip().replace('parent ', '')
                 tempstr = ptl.namecheck01(tempstr)
                 currentbone.parent = tempstr    
-            if x.strip().startswith('orientation '):
+            elif x.strip().startswith('orientation '):
                 #print (x)
                 tempstr = x.strip().replace('orientation ', '')
                 currentbone.orientation = tempstr                              
@@ -318,42 +344,42 @@ class CharacterImport(bpy.types.Operator):
                 #data.write(outstr)
                 
                             
-            if x.strip().startswith('twistX twistx'):
+            elif x.strip().startswith('twistX twistx'):
                 tempstr = x.strip()
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '
                 
-            if x.strip().startswith('twistY twisty'):
+            elif x.strip().startswith('twistY twisty'):
                 tempstr = x.strip()
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '    
                 
-            if x.strip().startswith('twistZ twistz'):
+            elif x.strip().startswith('twistZ twistz'):
                 tempstr = x.strip()
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '     
 
-            if x.strip().startswith('jointX jointx'):
+            elif x.strip().startswith('jointX jointx'):
                 tempstr = x.strip()
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '     
                 
-            if x.strip().startswith('jointY jointy'):
+            elif x.strip().startswith('jointY jointy'):
                 tempstr = x.strip()
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '  
                 
-            if x.strip().startswith('jointZ jointz'):
+            elif x.strip().startswith('jointZ jointz'):
                 tempstr = x.strip()
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
@@ -361,17 +387,44 @@ class CharacterImport(bpy.types.Operator):
                 currentbone.xyz = currentbone.xyz + tempstr + ' '                                                              
 
             
-            if x.startswith('figure') and figureCheck == False:
+            elif x.startswith('figure') and figureCheck == False:
                 figureCheck = True
                 #print ('========= Figure check True !! ===============')
                 
-            if x.strip().startswith('name') and figureCheck == True:
+            elif x.strip().startswith('name') and figureCheck == True:
                 tempstr = x.strip().replace('name', '')
                 tempstr = tempstr.strip()
                 CharName = tempstr
                 figureCheck = ''
                 
-    
+            ##########################################################
+            #  Morph Targets.
+            #
+            elif x.strip().startswith('targetGeom ') is True:
+                morph.name = x.strip().lstrip('targetGeom ')
+                morphloop = 1
+                # print ("Morph:", morph.name )
+            elif x.strip().startswith('k ') is True and morphloop > 0:
+                 morph.amount = float(x.strip().split()[2])
+            elif x.strip().startswith('min ') is True and morphloop > 0:
+                 morph.min = float(x.strip().split()[1])
+            elif x.strip().startswith('max ') is True and morphloop > 0:
+                 morph.max = float(x.strip().split()[1])
+            elif x.strip().startswith('d ') is True and morphloop > 0:
+                # print('d', x)
+                tempmorph = x.strip().lstrip('d ')
+                i, dx, dy, dz = [float(s) for s in tempmorph.split()]
+                morph.data.append( { int(i) : Vector( (dx, dy, dz) ) } )
+            #need to keep track of brackets in here, and the opening bracket is counted twice.
+            elif x.strip().startswith ('{') and morphloop > 0:
+                morphloop += 1
+            elif x.strip().startswith ('}') and morphloop > 2:
+                morphloop -= 1
+            elif x.strip().startswith ('}') and morphloop == 2:
+                morphloop = 0
+                morphs.append(morph)
+                morph = Morph()
+
             ##########################################################
             #  Build material array
             #                 
@@ -977,7 +1030,33 @@ class CharacterImport(bpy.types.Operator):
 
         #for face in cr2.geomData.faces:
         #    print (face)  
+        ##########################################################################
+        #
+        #  Morphs
+        # 
         
+        print ('\n')
+        print ('==================================================')
+        print ('=         Creating Shapekeys                     =')
+        print ('==================================================')    
+        print ('Number of Morphs:', len(morphs))
+        if( len(morphs) > 0):
+            sk_basis = ob.shape_key_add(name="Basis")
+            ob.data.shape_keys.use_relative = False
+            for morph in morphs:
+                print ("Morph:", morph.name, "Size:", len(morph.data) )
+                sk = ob.shape_key_add(name=morph.name)
+                sk.value = morph.amount
+                sk.slider_min = morph.min
+                sk.slider_max = morph.max
+                
+                # position each vert FIXME: there must be a better way...
+                for d in morph.data:
+                    for i, v in d.items():
+                        sk.data[i].co = sk_basis.data[i].co + mtrx_swap @ v 
+                ob.data.shape_keys.use_relative = True
+
+
         check = 1
         if check == 1:
                    
