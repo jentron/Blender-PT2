@@ -377,6 +377,7 @@ class LoadPoserProp(bpy.types.Operator):
 
           for PropArray in total_props:
             #print ('255:PropArray', PropArray)
+            depth = 0 # count of open braces
             vertcount = 0
             facecount = 0
             facearray = []
@@ -489,28 +490,33 @@ class LoadPoserProp(bpy.types.Operator):
             #
                 elif x.startswith('targetGeom ') is True:
                     morph.name = x.lstrip('targetGeom ')
-                    morphloop = 1
+                    morphloop = depth
                     # print ("Morph:", morph.name )
-                elif x.startswith('k ') is True and morphloop > 0:
+                elif x.startswith('k ') is True and depth >= morphloop:
                      morph.amount = float(x.split()[2])
-                elif x.startswith('min ') is True and morphloop > 0:
+                elif x.startswith('min ') is True and depth >= morphloop:
                      morph.min = float(x.split()[1])
-                elif x.startswith('max ') is True and morphloop > 0:
+                elif x.startswith('max ') is True and depth >= morphloop:
                      morph.max = float(x.split()[1])
-                elif x.startswith('d ') is True and morphloop > 0:
+                elif x.startswith('d ') is True and depth >= morphloop:
                     # print('d', x)
                     tempmorph = x.lstrip('d ')
                     i, dx, dy, dz = [float(s) for s in tempmorph.split()]
                     morph.data.append( { int(i) : Vector( (dx, dy, dz) ) } )
-                #need to keep track of brackets in here, and the opening bracket is counted twice.
-                elif x.startswith ('{') and morphloop > 0:
-                    morphloop += 1
-                elif x.startswith ('}') and morphloop > 2:
-                    morphloop -= 1
-                elif x.startswith ('}') and morphloop == 2:
-                    morphloop = 0
-                    morphs.append(morph)
-                    morph = Morph()
+                elif x.startswith ('{'):
+                    depth += 1
+                    # print('Depth++: ', depth, morphloop, matloop)
+                elif x.startswith ('}'):
+                    depth -= 1
+                    if morphloop >= depth:
+                        morphloop = -1
+                        morphs.append(morph)
+                        morph = Morph()
+                    if matloop >= depth:
+                        matloop = -1
+                        mats.append(mat)
+                        mat = []
+                    # print('Depth--: ', depth,  morphloop, matloop)
 
             ##########################################################
             #  Check for parent.
@@ -635,7 +641,7 @@ class LoadPoserProp(bpy.types.Operator):
             #  Build material array
             #                 
                 elif x.startswith('material ') is True:
-                    matloop = 1
+                    matloop = depth
                     #tempstr = x.lstrip('material ')
                     tempstr = x.split(' ')[1]
                     #
@@ -645,64 +651,64 @@ class LoadPoserProp(bpy.types.Operator):
                     #print ('mat name:', tempstr)
                     mat.append(tempstr)
                     
-                elif x.startswith ('KdColor ') and matloop == 1:
+                elif x.startswith ('KdColor ') and depth >= matloop:
                     mat.append(x)
                     
-                elif x.startswith ('KaColor ') and matloop == 1:
+                elif x.startswith ('KaColor ') and depth >= matloop:
                     mat.append(x)
     
-                elif x.startswith ('KsColor ') and matloop == 1:
+                elif x.startswith ('KsColor ') and depth >= matloop:
                     mat.append(x)                
                     
-                elif x.startswith ('TextureColor ') and matloop == 1:
+                elif x.startswith ('TextureColor ') and depth >= matloop:
                     mat.append(x)                
                     
-                elif x.startswith ('NsExponent ') and matloop == 1:
+                elif x.startswith ('NsExponent ') and depth >= matloop:
                     mat.append(x)             
     
-                elif x.startswith ('tMin ') and matloop == 1:
+                elif x.startswith ('tMin ') and depth >= matloop:
                     mat.append(x)                  
                     
-                elif x.startswith ('tMax ') and matloop == 1:
+                elif x.startswith ('tMax ') and depth >= matloop:
                     mat.append(x)
     
-                elif x.startswith ('tExpo ') and matloop == 1:
+                elif x.startswith ('tExpo ') and depth >= matloop:
                     mat.append(x)
                     
-                elif x.startswith ('bumpStrength ') and matloop == 1:
+                elif x.startswith ('bumpStrength ') and depth >= matloop:
                     mat.append(x)                
                     
-                elif x.startswith ('ksIgnoreTexture ') and matloop == 1:
+                elif x.startswith ('ksIgnoreTexture ') and depth >= matloop:
                     mat.append(x)                
                     
-                elif x.startswith ('reflectThruLights ') and matloop == 1:
+                elif x.startswith ('reflectThruLights ') and depth >= matloop:
                     mat.append(x)
                     
-                elif x.startswith ('reflectThruKd ') and matloop == 1:
+                elif x.startswith ('reflectThruKd ') and depth >= matloop:
                     mat.append(x)                
                     
-                elif x.startswith ('textureMap ') and matloop == 1:
+                elif x.startswith ('textureMap ') and depth >= matloop:
                     mat.append(x)             
                     
-                elif x.startswith ('bumpMap ') and matloop == 1:
+                elif x.startswith ('bumpMap ') and depth >= matloop:
                     mat.append(x)                   
                     
-                elif x.startswith ('reflectionMap ') and matloop == 1:
+                elif x.startswith ('reflectionMap ') and depth >= matloop:
                     mat.append(x)                
                     
-                elif x.startswith ('transparencyMap ') and matloop == 1:
+                elif x.startswith ('transparencyMap ') and depth >= matloop:
                     mat.append(x)           
                     
-                elif x.startswith ('ReflectionColor ') and matloop == 1:
+                elif x.startswith ('ReflectionColor ') and depth >= matloop:
                     mat.append(x)                  
                     
-                elif x.startswith ('reflectionStrength ') and matloop == 1:
+                elif x.startswith ('reflectionStrength ') and depth >= matloop:
                     mat.append(x)                
                     
-                elif x.startswith ('}') and matloop == 1:
-                    matloop = 0
-                    mats.append(mat)
-                    mat = []
+                ## elif x.startswith ('}') and matloop == 1:
+                ##     matloop = 0
+                ##     mats.append(mat)
+                ##     mat = []
 
             ##########################################################
             #
