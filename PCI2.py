@@ -144,10 +144,20 @@ class CR2Class():
    
 class Morph:
     def __init__(self):
-        self.data=[]
+        self.deltas=[]
         self.min = 0
         self.max = 1
+        self.value = 0
         self.name = 'shape'
+        self.group = ''
+        self.indexes = -1
+        self.numbDeltas = -1
+
+    def print(self):
+        print ('Morph:', self.name,
+               'Target:', self.group,
+               'Indexes: ', self.indexes,
+               'numbDeltas:', self.numbDeltas )
 
         
 ###########################################
@@ -303,16 +313,17 @@ class CharacterImport(bpy.types.Operator):
         #
         
         file = ptl.PT2_open(self.filepath, 'rt')
-        figureCheck = False         
+        figureCheck = False
+        currentActor='' # in Poser an 'actor' is a vertex group or bone
 
 
         for x in file: # FIXME: Why don't we .strip() here instead of at every level below?
             if x.strip().startswith('actor '):
                 tempstr = x.strip().replace('actor ', '')
+                currentActor = ptl.namecheck01(tempstr)
 
                 for bone in cr2.bones:
-                    tempstr = ptl.namecheck01(tempstr)
-                    if bone.name == tempstr:
+                    if bone.name == currentActor:
                         currentbone = bone
                         outstr = str(currentbone.name) + ':'
                         #data.write(outstr)
@@ -403,9 +414,9 @@ class CharacterImport(bpy.types.Operator):
             elif x.strip().startswith('targetGeom ') is True:
                 morph.name = x.strip().lstrip('targetGeom ')
                 morphloop = 1
-                # print ("Morph:", morph.name )
+                morph.group = currentActor
             elif x.strip().startswith('k ') is True and morphloop > 0:
-                 morph.amount = float(x.strip().split()[2])
+                 morph.value = float(x.strip().split()[2])
             elif x.strip().startswith('min ') is True and morphloop > 0:
                  morph.min = float(x.strip().split()[1])
             elif x.strip().startswith('max ') is True and morphloop > 0:
@@ -414,13 +425,18 @@ class CharacterImport(bpy.types.Operator):
                 # print('d', x)
                 tempmorph = x.strip().lstrip('d ')
                 i, dx, dy, dz = [float(s) for s in tempmorph.split()]
-                morph.data.append( { int(i) : Vector( (dx, dy, dz) ) } )
+                morph.deltas.append( { int(i) : Vector( (dx, dy, dz) ) } )
+            elif x.strip().startswith('indexes ') is True and morphloop > 0:
+                 morph.indexes = float(x.strip().split()[1])
+            elif x.strip().startswith('numbDeltas ') is True and morphloop > 0:
+                 morph.numbDeltas = float(x.strip().split()[1])
             #need to keep track of brackets in here, and the opening bracket is counted twice.
             elif x.strip().startswith ('{') and morphloop > 0:
                 morphloop += 1
             elif x.strip().startswith ('}') and morphloop > 2:
                 morphloop -= 1
             elif x.strip().startswith ('}') and morphloop == 2:
+                morph.print()
                 morphloop = 0
                 morphs.append(morph)
                 morph = Morph()
@@ -1044,21 +1060,22 @@ class CharacterImport(bpy.types.Operator):
             sk_basis = ob.shape_key_add(name="Basis")
             ob.data.shape_keys.use_relative = False
             for morph in morphs:
-                print ("Morph:", morph.name, "Size:", len(morph.data) )
-                sk = ob.shape_key_add(name=morph.name)
-                sk.value = morph.amount
+                print ("Morph:", morph.name, "Size:", len(morph.deltas) )
+                # sk = ob.shape_key_add(name=morph.name)
+                sk = ob.vertex_groups[morph.group].id_data.shape_key_add(name=morph.name, from)
+                sk.value = morph.value
                 sk.slider_min = morph.min
                 sk.slider_max = morph.max
                 
                 # position each vert FIXME: there must be a better way...
-                for d in morph.data:
+                for d in morph.deltas:
                     for i, v in d.items():
                         sk.data[i].co = sk_basis.data[i].co + mtrx_swap @ v 
                 ob.data.shape_keys.use_relative = True
 
 
-        check = 1
-        if check == 1:
+        doMaterials = True
+        if doMaterials:
                    
 
             ##########################################################################
