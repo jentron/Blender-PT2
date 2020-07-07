@@ -1054,15 +1054,18 @@ class CharacterImport(bpy.types.Operator):
         print ('\n')
         print ('==================================================')
         print ('=         Creating Shapekeys                     =')
-        print ('==================================================')    
-        print ('Number of Morphs:', len(morphs))
+        print ('==================================================')
+        # print ('Number of Morphs:', len(morphs))
+
         if( len(morphs) > 0):
             sk_basis = ob.shape_key_add(name="Basis")
             ob.data.shape_keys.use_relative = False
             for morph in morphs:
-                print ("Morph:", morph.name, "Size:", len(morph.deltas) )
-                # sk = ob.shape_key_add(name=morph.name)
-                sk = ob.vertex_groups[morph.group].id_data.shape_key_add(name=morph.name, from)
+                # print ("Morph:", morph.name, "Size:", len(morph.deltas) )
+                vg_idx = ob.vertex_groups[morph.group].index # get group index
+                vs = [ v for v in ob.data.vertices if vg_idx in [ vg.group for vg in v.groups ] ]
+                
+                sk = ob.vertex_groups[morph.group].id_data.shape_key_add(name=morph.name)
                 sk.value = morph.value
                 sk.slider_min = morph.min
                 sk.slider_max = morph.max
@@ -1070,7 +1073,8 @@ class CharacterImport(bpy.types.Operator):
                 # position each vert FIXME: there must be a better way...
                 for d in morph.deltas:
                     for i, v in d.items():
-                        sk.data[i].co = sk_basis.data[i].co + mtrx_swap @ v 
+                        v_idx = vs[i].index
+                        sk.data[v_idx].co = sk_basis.data[v_idx].co + mtrx_swap @ v 
                 ob.data.shape_keys.use_relative = True
 
 
