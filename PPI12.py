@@ -226,7 +226,7 @@ class LoadPoserProp(bpy.types.Operator):
                 #  
                 if systemType.startswith('win'):
                     if x.strip().startswith('objFileGeom 0 0') is True:
-                        subpath = x.strip().lstrip('objFileGeom 0 0')
+                        subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
                         subpath = subpath.strip()
                         subpath = subpath.replace(':', '\\')                
                         geompath = '\\'.join(contentloc) + subpath
@@ -234,7 +234,7 @@ class LoadPoserProp(bpy.types.Operator):
                        print ('Next obj\n')
                 else:
                     if x.strip().startswith('objFileGeom 0 0') is True:
-                        subpath = x.strip().lstrip('objFileGeom 0 0')
+                        subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
                         subpath = subpath.strip()
                         subpath = subpath.replace(':', '/')                
                         geompath = '/'.join(contentloc) + subpath
@@ -317,7 +317,7 @@ class LoadPoserProp(bpy.types.Operator):
                 if systemType == 'win':
                     if x.strip().startswith('objFileGeom 0 0') is True:
                         # Read outside OBJ file here.
-                        subpath = x.strip().lstrip('objFileGeom 0 0')
+                        subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
                         subpath = subpath.strip()
                         subpath = subpath.replace(':', '\\')                
                         geompath = '\\'.join(contentloc) + subpath
@@ -333,7 +333,7 @@ class LoadPoserProp(bpy.types.Operator):
                 else:
                     #print ('Linux >1 section') 
                     if x.strip().startswith('objFileGeom 0 0') is True:
-                       subpath = x.strip().lstrip('objFileGeom 0 0')
+                       subpath = x.strip().lstrip('objFileGeom 0 0')  #FIXME: borked
                        subpath = subpath.strip()
                        subpath = subpath.replace(':', '/')                
                        geompath = '/'.join(contentloc) + subpath
@@ -445,7 +445,7 @@ class LoadPoserProp(bpy.types.Operator):
                 temparray2 = []
                 #print (x)
                 if x.startswith('prop ') is True:
-                    prop_name = x.lstrip('prop ')
+                    prop_name = re.sub(r'^prop[\t ]+', '', x)
                     print("Prop name: ", prop_name)
                     rotationtemp[0] = prop_name
                     scaletemp[0] = prop_name
@@ -454,7 +454,7 @@ class LoadPoserProp(bpy.types.Operator):
     
                 elif x.startswith('v ') is True:
                     #print (x)
-                    tempvert = x.lstrip('v ')
+                    tempvert = re.sub(r'^v[\t ]+', '', x)
                     temp_array = [float(s) for s in tempvert.split()]
                     # array = Vector(temp_array) @ mtrx_swap
                     array = [temp_array[0], -temp_array[2], temp_array[1]]  #hardcode Y Z swap
@@ -469,17 +469,17 @@ class LoadPoserProp(bpy.types.Operator):
                     current_mat = str(mat_counter) + ' ' + current_mat
                     
                 elif x.startswith('g\t') is True:
-                    tempstr = x.lstrip('g\t')
+                    tempstr = re.sub(r'^g[\t ]+', '', x)
                     tempstr = tempstr.replace('\t', ' ')
                     face_to_group = tempstr
     
                 elif x.startswith('f ') is True:
                     tempstr1 = current_mat
-                    tempstr2 = x.lstrip('f ')
+                    tempstr2 = re.sub(r'^f[\t ]+', '', x)
                     facearray.append([tempstr1, tempstr2])
                     
                 elif x.startswith('vt ') is True:
-                    tempstr = x.lstrip('vt ')
+                    tempstr = re.sub(r'^vt[\t ]+', '', x)
                     #print (tempstr)
                     temparray1 = [float(s) for s in tempstr.split()]
                     temparray2.append(temparray1[0])
@@ -489,7 +489,7 @@ class LoadPoserProp(bpy.types.Operator):
             #  Morph Targets.
             #
                 elif x.startswith('targetGeom ') is True:
-                    morph.name = x.lstrip('targetGeom ')
+                    morph.name = re.sub(r'^targetGeom[\t ]+', '', x)
                     morphloop = depth
                     # print ("Morph:", morph.name )
                 elif x.startswith('k ') is True and depth >= morphloop:
@@ -500,7 +500,7 @@ class LoadPoserProp(bpy.types.Operator):
                      morph.max = float(x.split()[1])
                 elif x.startswith('d ') is True and depth >= morphloop:
                     # print('d', x)
-                    tempmorph = x.lstrip('d ')
+                    tempmorph = re.sub(r'^d[\t ]+', '', x)
                     i, dx, dy, dz = [float(s) for s in tempmorph.split()]
                     morph.data.append( { int(i) : Vector( (dx, dy, dz) ) } )
                 elif x.startswith ('{'):
@@ -530,8 +530,7 @@ class LoadPoserProp(bpy.types.Operator):
             #  Origin
             #
                 elif x.startswith('origin ') is True:
-                     tempstring = x.strip()
-                     tempstring = tempstring.lstrip('origin ')
+                     tempstring = re.sub(r'^origin[\t ]+', '', x)
                      tempstring = tempstring.split()
                      print ('tempstring:', tempstring)
                      obj_origin = (float(tempstring[0]), -float(tempstring[2]), float(tempstring[1])) #hardcode Y Z swap
@@ -642,7 +641,6 @@ class LoadPoserProp(bpy.types.Operator):
             #                 
                 elif x.startswith('material ') is True:
                     matloop = depth
-                    #tempstr = x.lstrip('material ')
                     tempstr = x.split(' ')[1]
                     #
                     #  double mat name fix - add prop name
@@ -923,7 +921,7 @@ class LoadPoserProp(bpy.types.Operator):
             
                     #  Diffuse Color
                     if info.startswith('KdColor ') is True:
-                        tempstr = info.lstrip('KdColor ')
+                        tempstr = re.sub(r'^KdColor[\t ]+', '', info)
                         array = [float(s) for s in tempstr.split()]
                         if len(array) < 3:
                             array[3] = 0
@@ -967,7 +965,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #                      
                     
                     if info.startswith('textureMap ') is True and info.endswith('NO_MAP') is False:
-                        tempstr=info.lstrip('textureMap ')
+                        tempstr=re.sub(r'^textureMap[\t ]+', '', info)
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
@@ -1046,7 +1044,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #                        
                     
                     if info.startswith('bumpMap ') is True and info.endswith('NO_MAP') is False:
-                        tempstr=info.lstrip('bumpMap ')
+                        tempstr=re.sub(r'^bumpMap[\t ]+', '', info)
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
@@ -1133,7 +1131,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #                        
                     
                     if info.startswith('transparencyMap ') is True and info.endswith('NO_MAP') is False:
-                        tempstr=info.lstrip('transparencyMap ')
+                        tempstr=re.sub(r'^transparencyMap[\t ]+', '', info)
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
@@ -1222,7 +1220,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #                        
                     
                     if info.startswith('reflectionMap ') is True and info.endswith('NO_MAP') is False:
-                        tempstr=info.lstrip('reflectionMap ')
+                        tempstr=re.sub(r'^reflectionMap[\t ]+', '', info)
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
@@ -1624,7 +1622,7 @@ class LoadPoserProp(bpy.types.Operator):
         print ('Props len:', len(total_props))
         if len(total_props) > 1:
             for x in total_props:
-                propstring = x[0].lstrip('prop ')
+                propstring = re.sub(r'^prop[\t ]+', '', x[0])
                 propstring = propstring.strip()
                 check_prop = bpy.data.objects.get(propstring)
                 print (propstring)

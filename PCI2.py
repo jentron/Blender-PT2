@@ -240,7 +240,8 @@ class CharacterImport(bpy.types.Operator):
         cr2.bones = []
         morphcounts = []
 
-        for x in file:
+        for y in file:
+            x=y.strip()
 
             ##############################
             #
@@ -248,9 +249,9 @@ class CharacterImport(bpy.types.Operator):
             #
                        
 
-            if x.strip().startswith('actor ') is True:
+            if x.startswith('actor ') is True:
                #print (x)
-               tempstr = x.strip()
+               tempstr = x
                tempstr = tempstr.replace('actor ', '')
                skipcheck = False
                tempstr = ptl.namecheck01(tempstr)
@@ -269,8 +270,8 @@ class CharacterImport(bpy.types.Operator):
                   tempstr = ptl.namecheck01(tempstr)
                   thisbone.name = tempstr
 
-            elif x.strip().startswith('targetGeom ') is True:
-               tempstr = x.strip()
+            elif x.startswith('targetGeom ') is True:
+               tempstr = x
                if morphcounts.__contains__(tempstr) is False:
                   morphcounts.append(tempstr)
 
@@ -280,9 +281,9 @@ class CharacterImport(bpy.types.Operator):
             # geompath
             #
 
-            elif x.strip().startswith('figureResFile ') is True:
+            elif x.startswith('figureResFile ') is True:
                 #print (x)
-                tempstr = x.strip()
+                tempstr = x
                 tempstr = tempstr.replace('figureResFile ', '')
                 cr2.geompath = tempstr
                 #print ('GeomFile:', character.geompath)
@@ -319,9 +320,10 @@ class CharacterImport(bpy.types.Operator):
 
 
 
-        for x in file: # FIXME: Why don't we .strip() here instead of at every level below?
-            if x.strip().startswith('actor '):
-                tempstr = x.strip().replace('actor ', '')
+        for y in file: 
+            x = y.strip() # do we .strip() here instead of at every level below?
+            if x.startswith('actor '):
+                tempstr = x.replace('actor ', '')
                 currentActor = ptl.namecheck01(tempstr)
 
                 for bone in cr2.bones:
@@ -332,68 +334,64 @@ class CharacterImport(bpy.types.Operator):
             ###############################################                        
                         
             
-            elif x.strip().startswith('angles '):
-                tempstr = x.strip().replace('angles ', '')
+            elif x.startswith('angles '):
+                tempstr = x.replace('angles ', '')
                 currentbone.angles = tempstr                                
                 
-            elif x.strip().startswith('origin '):
-                tempstr = x.strip().replace('origin ', '')
+            elif x.startswith('origin '):
+                tempstr = x.replace('origin ', '')
                 currentbone.origin = tempstr
                 
-            elif x.strip().startswith('endPoint '):
+            elif x.startswith('endPoint '):
                 #print (x)
-                tempstr = x.strip().replace('endPoint ', '')
+                tempstr = x.replace('endPoint ', '')
                 currentbone.endpoint = tempstr   
-            elif x.strip().startswith('parent '):
+            elif x.startswith('parent '):
                 #print (x)
-                tempstr = x.strip().replace('parent ', '')
+                tempstr = x.replace('parent ', '')
                 tempstr = ptl.namecheck01(tempstr)
                 currentbone.parent = tempstr    
-            elif x.strip().startswith('orientation '):
+            elif x.startswith('orientation '):
                 #print (x)
-                tempstr = x.strip().replace('orientation ', '')
+                tempstr = x.replace('orientation ', '')
                 currentbone.orientation = tempstr                              
                 outstr = ' orientation:' + tempstr + '\n'
                 #data.write(outstr)
-                
-                            
-            elif x.strip().startswith('twistX twistx'):
-                tempstr = x.strip()
-                #print ('currentbone:', currentbone.name)
-                #print ('adding:', tempstr)
-                tempstr = tempstr.replace(' ', '_')
+            elif x.startswith('twistX twistx'):
+                tempstr = x.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '
-                
-            elif x.strip().startswith('twistY twisty'):
-                tempstr = x.strip()
+                #print ('currentbone:', currentbone.name)
+                #print ('adding:', tempstr)                
+            elif x.startswith('twistY twisty'):
+                tempstr = x
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '    
                 
-            elif x.strip().startswith('twistZ twistz'):
-                tempstr = x.strip()
+            elif x.startswith('twistZ twistz'):
+                tempstr = x
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '     
 
-            elif x.strip().startswith('jointX jointx'):
-                tempstr = x.strip()
+            elif x.startswith('jointX jointx'):
+                tempstr = x
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '     
                 
-            elif x.strip().startswith('jointY jointy'):
-                tempstr = x.strip()
+            elif x.startswith('jointY jointy'):
+                tempstr = x
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '  
                 
-            elif x.strip().startswith('jointZ jointz'):
-                tempstr = x.strip()
+            elif x.startswith('jointZ jointz'):
+                tempstr = x
                 #print ('currentbone:', currentbone.name)
                 #print ('adding:', tempstr)
                 tempstr = tempstr.replace(' ', '_')
@@ -404,8 +402,8 @@ class CharacterImport(bpy.types.Operator):
                 figureCheck = True
                 #print ('========= Figure check True !! ===============')
                 
-            elif x.strip().startswith('name') and figureCheck == True:
-                tempstr = x.strip().replace('name', '')
+            elif x.startswith('name') and figureCheck == True:
+                tempstr = x.replace('name', '')
                 tempstr = tempstr.strip()
                 CharName = tempstr
                 figureCheck = ''
@@ -413,29 +411,29 @@ class CharacterImport(bpy.types.Operator):
             ##########################################################
             #  Morph Targets.
             #
-            elif x.strip().startswith('targetGeom ') is True:
-                morph.name = x.strip().lstrip('targetGeom ')
+            elif x.startswith('targetGeom ') is True:
+                morph.name = x.lstrip('targetGeom ')
                 morphloop = depth
                 morph.group = currentActor
-            elif x.strip().startswith('k ') is True and depth >= morphloop:
-                 morph.value = float(x.strip().split()[2])
-            elif x.strip().startswith('min ') is True and depth >= morphloop:
-                 morph.min = float(x.strip().split()[1])
-            elif x.strip().startswith('max ') is True and depth >= morphloop:
-                 morph.max = float(x.strip().split()[1])
-            elif x.strip().startswith('d ') is True and depth >= morphloop:
+            elif x.startswith('k ') is True and depth >= morphloop:
+                 morph.value = float(x.split()[2])
+            elif x.startswith('min ') is True and depth >= morphloop:
+                 morph.min = float(x.split()[1])
+            elif x.startswith('max ') is True and depth >= morphloop:
+                 morph.max = float(x.split()[1])
+            elif x.startswith('d ') is True and depth >= morphloop:
                 # print('d', x)
-                tempmorph = x.strip().lstrip('d ')
+                tempmorph = x.lstrip('d ')
                 i, dx, dy, dz = [float(s) for s in tempmorph.split()]
                 morph.deltas.append( { int(i) : Vector( (dx, dy, dz) ) } )
-            elif x.strip().startswith('indexes ') is True and depth >= morphloop:
-                 morph.indexes = float(x.strip().split()[1])
-            elif x.strip().startswith('numbDeltas ') is True and depth >= morphloop:
-                 morph.numbDeltas = float(x.strip().split()[1])
-            elif x.strip().startswith ('{'):
+            elif x.startswith('indexes ') is True and depth >= morphloop:
+                 morph.indexes = float(x.split()[1])
+            elif x.startswith('numbDeltas ') is True and depth >= morphloop:
+                 morph.numbDeltas = float(x.split()[1])
+            elif x.startswith ('{'):
                 depth += 1
                 # print('Depth++: ', depth, morphloop, matloop)
-            elif x.strip().startswith ('}'):
+            elif x.startswith ('}'):
                 depth -= 1
                 if morphloop >= depth:
                     # morph.print()
@@ -451,10 +449,10 @@ class CharacterImport(bpy.types.Operator):
             ##########################################################
             #  Build material array
             #                 
-            elif x.strip().startswith('material ') is True:
+            elif x.startswith('material ') is True:
                 matloop = depth
                 #tempstr = x.lstrip('material ')
-                tempstr = x.strip().split(' ')[1]
+                tempstr = x.split(' ')[1]
                 #
                 #  double mat name fix - add prop name
                 #
@@ -464,59 +462,59 @@ class CharacterImport(bpy.types.Operator):
                 #print ('mat name:', tempstr)
                 mat.append(tempstr)
                     
-            elif x.strip().startswith ('KdColor ') and depth >= matloop:
-                    mat.append(x.strip())
+            elif x.startswith ('KdColor ') and depth >= matloop:
+                    mat.append(x)
                 
-            elif x.strip().startswith ('KaColor ') and depth >= matloop:
-                    mat.append(x.strip())
+            elif x.startswith ('KaColor ') and depth >= matloop:
+                    mat.append(x)
    
-            elif x.strip().startswith ('KsColor ') and depth >= matloop:
-                    mat.append(x.strip())                
+            elif x.startswith ('KsColor ') and depth >= matloop:
+                    mat.append(x)                
                     
-            elif x.strip().startswith ('TextureColor ') and depth >= matloop:
-                    mat.append(x.strip())                
+            elif x.startswith ('TextureColor ') and depth >= matloop:
+                    mat.append(x)                
                     
-            elif x.strip().startswith ('NsExponent ') and depth >= matloop:
-                    mat.append(x.strip())             
+            elif x.startswith ('NsExponent ') and depth >= matloop:
+                    mat.append(x)             
     
-            elif x.strip().startswith ('tMin ') and depth >= matloop:
-                    mat.append(x.strip())                  
+            elif x.startswith ('tMin ') and depth >= matloop:
+                    mat.append(x)                  
                     
-            elif x.strip().startswith ('tMax ') and depth >= matloop:
-                    mat.append(x.strip())
+            elif x.startswith ('tMax ') and depth >= matloop:
+                    mat.append(x)
     
-            elif x.strip().startswith ('tExpo ') and depth >= matloop:
-                    mat.append(x.strip())
+            elif x.startswith ('tExpo ') and depth >= matloop:
+                    mat.append(x)
                     
-            elif x.strip().startswith ('bumpStrength ') and depth >= matloop:
-                    mat.append(x.strip())                
+            elif x.startswith ('bumpStrength ') and depth >= matloop:
+                    mat.append(x)                
                     
-            elif x.strip().startswith ('ksIgnoreTexture ') and depth >= matloop:
-                    mat.append(x.strip())                
+            elif x.startswith ('ksIgnoreTexture ') and depth >= matloop:
+                    mat.append(x)                
                     
-            elif x.strip().startswith ('reflectThruLights ') and depth >= matloop:
-                    mat.append(x.strip())
+            elif x.startswith ('reflectThruLights ') and depth >= matloop:
+                    mat.append(x)
                     
-            elif x.strip().startswith ('reflectThruKd ') and depth >= matloop:
-                    mat.append(x.strip())                
+            elif x.startswith ('reflectThruKd ') and depth >= matloop:
+                    mat.append(x)                
                     
-            elif x.strip().startswith ('textureMap ') and depth >= matloop:
-                    mat.append(x.strip())             
+            elif x.startswith ('textureMap ') and depth >= matloop:
+                    mat.append(x)             
                     
-            elif x.strip().startswith ('bumpMap ') and depth >= matloop:
-                    mat.append(x.strip())                   
+            elif x.startswith ('bumpMap ') and depth >= matloop:
+                    mat.append(x)                   
                     
-            elif x.strip().startswith ('reflectionMap ') and depth >= matloop:
-                    mat.append(x.strip())                
+            elif x.startswith ('reflectionMap ') and depth >= matloop:
+                    mat.append(x)                
                     
-            elif x.strip().startswith ('transparencyMap ') and depth >= matloop:
-                    mat.append(x.strip())           
+            elif x.startswith ('transparencyMap ') and depth >= matloop:
+                    mat.append(x)           
                     
-            elif x.strip().startswith ('ReflectionColor ') and depth >= matloop:
-                   mat.append(x.strip())                  
+            elif x.startswith ('ReflectionColor ') and depth >= matloop:
+                   mat.append(x)                  
                     
-            elif x.strip().startswith ('reflectionStrength ') and depth >= matloop:
-                    mat.append(x.strip())                
+            elif x.startswith ('reflectionStrength ') and depth >= matloop:
+                    mat.append(x)                
                     
 
                 
@@ -783,7 +781,7 @@ class CharacterImport(bpy.types.Operator):
             #
             ###########################################              
             
-            if temp.strip().startswith('v '):
+            if temp.startswith('v '):
                 vert = temp.split() 
                 vert.remove('v')
                 vert = [float(i) for i in vert]
@@ -798,7 +796,7 @@ class CharacterImport(bpy.types.Operator):
             ###########################################  
 
 
-            elif temp.strip().startswith('old_f '):
+            elif temp.startswith('old_f '):
                 face = temp.split()
                 face.remove('f')
                 tempface = []
@@ -815,7 +813,7 @@ class CharacterImport(bpy.types.Operator):
 
             elif temp.startswith('f ') is True:
                 tempstr1 = current_mat
-                tempstr2 = temp.lstrip('f ').strip()
+                tempstr2 = temp.lstrip('f ')
                 tempstr3 = current_group
                 facearray.append([tempstr1, tempstr2, tempstr3])       
                 #print (tempstr1, tempstr2, tempstr3)             
@@ -826,7 +824,7 @@ class CharacterImport(bpy.types.Operator):
             #
             ###########################################  
             
-            elif temp.strip().startswith('old_vt '):
+            elif temp.startswith('old_vt '):
                 uvvert = temp.split()
                 uvvert.remove('vt')
                 uvvert = [float(i) for i in uvvert]
