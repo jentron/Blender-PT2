@@ -294,14 +294,15 @@ class CharacterImport(bpy.types.Operator):
         #    print (bone.name)
         #print ('-------------')
         
+        depth = 0 # count of open braces
         mats = []
         mat = []
-        matloop = 0
+        matloop = -1
         mat_counter = 'NA '
         current_mat = 'No Mat'        
         morphs = []
         morph = Morph()
-        morphloop = 0
+        morphloop = -1
         current_morph = ''
         mtrx_swap = Matrix((( 1, 0, 0, 0),
                             ( 0, 1, 0, 0),
@@ -315,6 +316,7 @@ class CharacterImport(bpy.types.Operator):
         file = ptl.PT2_open(self.filepath, 'rt')
         figureCheck = False
         currentActor='' # in Poser an 'actor' is a vertex group or bone
+
 
 
         for x in file: # FIXME: Why don't we .strip() here instead of at every level below?
@@ -413,39 +415,44 @@ class CharacterImport(bpy.types.Operator):
             #
             elif x.strip().startswith('targetGeom ') is True:
                 morph.name = x.strip().lstrip('targetGeom ')
-                morphloop = 1
+                morphloop = depth
                 morph.group = currentActor
-            elif x.strip().startswith('k ') is True and morphloop > 0:
+            elif x.strip().startswith('k ') is True and depth >= morphloop:
                  morph.value = float(x.strip().split()[2])
-            elif x.strip().startswith('min ') is True and morphloop > 0:
+            elif x.strip().startswith('min ') is True and depth >= morphloop:
                  morph.min = float(x.strip().split()[1])
-            elif x.strip().startswith('max ') is True and morphloop > 0:
+            elif x.strip().startswith('max ') is True and depth >= morphloop:
                  morph.max = float(x.strip().split()[1])
-            elif x.strip().startswith('d ') is True and morphloop > 0:
+            elif x.strip().startswith('d ') is True and depth >= morphloop:
                 # print('d', x)
                 tempmorph = x.strip().lstrip('d ')
                 i, dx, dy, dz = [float(s) for s in tempmorph.split()]
                 morph.deltas.append( { int(i) : Vector( (dx, dy, dz) ) } )
-            elif x.strip().startswith('indexes ') is True and morphloop > 0:
+            elif x.strip().startswith('indexes ') is True and depth >= morphloop:
                  morph.indexes = float(x.strip().split()[1])
-            elif x.strip().startswith('numbDeltas ') is True and morphloop > 0:
+            elif x.strip().startswith('numbDeltas ') is True and depth >= morphloop:
                  morph.numbDeltas = float(x.strip().split()[1])
-            #need to keep track of brackets in here, and the opening bracket is counted twice.
-            elif x.strip().startswith ('{') and morphloop > 0:
-                morphloop += 1
-            elif x.strip().startswith ('}') and morphloop > 2:
-                morphloop -= 1
-            elif x.strip().startswith ('}') and morphloop == 2:
-                morph.print()
-                morphloop = 0
-                morphs.append(morph)
-                morph = Morph()
+            elif x.strip().startswith ('{'):
+                depth += 1
+                # print('Depth++: ', depth, morphloop, matloop)
+            elif x.strip().startswith ('}'):
+                depth -= 1
+                if morphloop >= depth:
+                    # morph.print()
+                    morphloop = -1
+                    morphs.append(morph)
+                    morph = Morph()
+                if matloop >= depth:
+                    matloop = -1
+                    mats.append(mat)
+                    mat = []
+                    # print('Depth--: ', depth,  morphloop, matloop)
 
             ##########################################################
             #  Build material array
             #                 
             elif x.strip().startswith('material ') is True:
-                matloop = 1
+                matloop = depth
                 #tempstr = x.lstrip('material ')
                 tempstr = x.strip().split(' ')[1]
                 #
@@ -457,64 +464,60 @@ class CharacterImport(bpy.types.Operator):
                 #print ('mat name:', tempstr)
                 mat.append(tempstr)
                     
-            elif x.strip().startswith ('KdColor ') and matloop == 1:
+            elif x.strip().startswith ('KdColor ') and depth >= matloop:
                     mat.append(x.strip())
                 
-            elif x.strip().startswith ('KaColor ') and matloop == 1:
+            elif x.strip().startswith ('KaColor ') and depth >= matloop:
                     mat.append(x.strip())
    
-            elif x.strip().startswith ('KsColor ') and matloop == 1:
+            elif x.strip().startswith ('KsColor ') and depth >= matloop:
                     mat.append(x.strip())                
                     
-            elif x.strip().startswith ('TextureColor ') and matloop == 1:
+            elif x.strip().startswith ('TextureColor ') and depth >= matloop:
                     mat.append(x.strip())                
                     
-            elif x.strip().startswith ('NsExponent ') and matloop == 1:
+            elif x.strip().startswith ('NsExponent ') and depth >= matloop:
                     mat.append(x.strip())             
     
-            elif x.strip().startswith ('tMin ') and matloop == 1:
+            elif x.strip().startswith ('tMin ') and depth >= matloop:
                     mat.append(x.strip())                  
                     
-            elif x.strip().startswith ('tMax ') and matloop == 1:
+            elif x.strip().startswith ('tMax ') and depth >= matloop:
                     mat.append(x.strip())
     
-            elif x.strip().startswith ('tExpo ') and matloop == 1:
+            elif x.strip().startswith ('tExpo ') and depth >= matloop:
                     mat.append(x.strip())
                     
-            elif x.strip().startswith ('bumpStrength ') and matloop == 1:
+            elif x.strip().startswith ('bumpStrength ') and depth >= matloop:
                     mat.append(x.strip())                
                     
-            elif x.strip().startswith ('ksIgnoreTexture ') and matloop == 1:
+            elif x.strip().startswith ('ksIgnoreTexture ') and depth >= matloop:
                     mat.append(x.strip())                
                     
-            elif x.strip().startswith ('reflectThruLights ') and matloop == 1:
+            elif x.strip().startswith ('reflectThruLights ') and depth >= matloop:
                     mat.append(x.strip())
                     
-            elif x.strip().startswith ('reflectThruKd ') and matloop == 1:
+            elif x.strip().startswith ('reflectThruKd ') and depth >= matloop:
                     mat.append(x.strip())                
                     
-            elif x.strip().startswith ('textureMap ') and matloop == 1:
+            elif x.strip().startswith ('textureMap ') and depth >= matloop:
                     mat.append(x.strip())             
                     
-            elif x.strip().startswith ('bumpMap ') and matloop == 1:
+            elif x.strip().startswith ('bumpMap ') and depth >= matloop:
                     mat.append(x.strip())                   
                     
-            elif x.strip().startswith ('reflectionMap ') and matloop == 1:
+            elif x.strip().startswith ('reflectionMap ') and depth >= matloop:
                     mat.append(x.strip())                
                     
-            elif x.strip().startswith ('transparencyMap ') and matloop == 1:
+            elif x.strip().startswith ('transparencyMap ') and depth >= matloop:
                     mat.append(x.strip())           
                     
-            elif x.strip().startswith ('ReflectionColor ') and matloop == 1:
+            elif x.strip().startswith ('ReflectionColor ') and depth >= matloop:
                    mat.append(x.strip())                  
                     
-            elif x.strip().startswith ('reflectionStrength ') and matloop == 1:
+            elif x.strip().startswith ('reflectionStrength ') and depth >= matloop:
                     mat.append(x.strip())                
                     
-            elif x.strip().startswith ('}') and matloop == 1:
-                    matloop = 0
-                    mats.append(mat)
-                    mat = []                           
 
                 
             
