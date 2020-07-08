@@ -120,7 +120,7 @@ class LoadPoserProp(bpy.types.Operator):
     filename : bpy.props.StringProperty()
     filename_ext = ".pp2"
 
-    filter_glob : StringProperty(default="*.pp2;*.ppz", options={'HIDDEN'})
+    filter_glob : StringProperty(default="*.pp2;*.ppz;*.hr2;*.hrz", options={'HIDDEN'})
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
     CPT = []
     child_parent = []
@@ -260,7 +260,7 @@ class LoadPoserProp(bpy.types.Operator):
 
         total_props.append(PropArray)
         
-        bpy.total_props = total_props
+        # bpy.total_props = total_props ## what the heck is this?
 
         if len(objcounts) > 1:
             print ('==================================================')
@@ -445,8 +445,8 @@ class LoadPoserProp(bpy.types.Operator):
                 temparray2 = []
                 #print (x)
                 if x.startswith('prop ') is True:
-                    print (x)
                     prop_name = x.lstrip('prop ')
+                    print("Prop name: ", prop_name)
                     rotationtemp[0] = prop_name
                     scaletemp[0] = prop_name
                     #bpy.context.object.name=(name)
