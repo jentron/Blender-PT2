@@ -89,10 +89,10 @@ from math import *
 from bpy_extras import *
 from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
-from . import PT2_Library as ptl
+from . import LIBgzip as ptl
 
 print ('\n')
-print ('--- Starting Poser Character Importer Version 2 ---')
+print ('--- Starting Poser Character Importer Version 3 ---')
 systemType = sys.platform
 print ('System Type:', systemType)
 bpy.cr2count = 0
@@ -1172,7 +1172,7 @@ class CharacterImport(bpy.types.Operator):
                     
                     contentloc = str(getbasepath(self.filepath))
                     #print ('contentloc:', contentloc)   
-                    from . import GetStringRes
+                    from . import LIBGetStringRes
                     import re
                     if info.startswith('textureMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=info.lstrip('textureMap ')

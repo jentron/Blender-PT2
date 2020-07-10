@@ -46,7 +46,7 @@ import os
 import re
 import errno
 
-from . import PT2_Library as ptl
+from . import LIBgzip as ptl
 
 # Convenience Imports:
 from mathutils import *
@@ -57,7 +57,7 @@ from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 print ('\n')
-print ('--- Starting Poser Prop Importer Version 14 ---')
+print ('--- Starting Poser Prop Importer Version 15 ---')
 systemType = sys.platform
 print ('System Type:', systemType)
 
