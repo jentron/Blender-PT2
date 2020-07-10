@@ -33,20 +33,14 @@
 #
 ###################################################
 
-##########################################################
-# Check system
-#  
-
-
-
 import bpy
 import time
-import sys
 import os
 import re
 import errno
 
 from . import LIBgzip as ptl
+from . import LIBRuntimeFolder as Runtime
 
 # Convenience Imports:
 from mathutils import *
@@ -58,8 +52,6 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 print ('\n')
 print ('--- Starting Poser Prop Importer Version 15 ---')
-systemType = sys.platform
-print ('System Type:', systemType)
 
 class Morph:
     def __init__(self):
@@ -130,14 +122,17 @@ class LoadPoserProp(bpy.types.Operator):
         PropArray = []
         geompath = ''
         file_error = ''
-        #global contentloc
-
+ 
         #########################################
         #  
         # Scan for multi obj's first:
         # 
         time_start = time.time()
         file = ptl.PT2_open(self.filepath, 'rt')
+
+        rt = Runtime.Runtime(self.filepath)
+        #rt.print()
+        
         objcounts = []
         morphcounts = []
         for x in file:
@@ -176,31 +171,6 @@ class LoadPoserProp(bpy.types.Operator):
         #bpy.mat_counter = bpy.mat_counter + 1            
         mat_counter = bpy.mat_counter
         
-
-        ##########################################################
-        # get content location
-        # 
-        
-        ##########################################################
-        # Check system
-        #         
-        print (systemType)     
-        
-        if systemType.startswith('win'):           
-            array = [str(s) for s in self.filepath.split('\\')]
-        else:
-            array = [str(s) for s in self.filepath.split('/')]                        
-        skip = 0
-        contentloc = []
-        for y in array:
-            if y == 'Runtime':
-                skip = 1
-            if skip == 0:
-                contentloc.append(y)
-
-        ###########################################################            
-
-
         ##########################################################
         # Read and store file
         #    
@@ -220,26 +190,14 @@ class LoadPoserProp(bpy.types.Operator):
             for x in file:
                 PropArray.append(x.strip())
                 # check for geom path here
-                
-                ##########################################################
-                # Check system
-                #  
-                if systemType.startswith('win'):
-                    if x.strip().startswith('objFileGeom 0 0') is True:
-                        subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
-                        subpath = subpath.strip()
-                        subpath = subpath.replace(':', '\\')                
-                        geompath = '\\'.join(contentloc) + subpath
-                    if x.strip().startswith('geomCustom') is True:
-                       print ('Next obj\n')
-                else:
-                    if x.strip().startswith('objFileGeom 0 0') is True:
-                        subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
-                        subpath = subpath.strip()
-                        subpath = subpath.replace(':', '/')                
-                        geompath = '/'.join(contentloc) + subpath
-                    if x.strip().startswith('geomCustom') is True:
-                       print ('Next obj\n')                      
+                if x.strip().startswith('objFileGeom 0 0') is True:
+                    subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
+                    subpath = subpath.strip()
+                    subpath = subpath.replace(':', '\\')                
+                    geompath = rt.find_geometry_path(subpath)
+                    
+                if x.strip().startswith('geomCustom') is True:
+                   print ('Next obj\n')
                        
                        
             print ('Time to read file:', time.time()-time_start)                
@@ -307,49 +265,19 @@ class LoadPoserProp(bpy.types.Operator):
                 else:           
                     PropArray.append(x.strip())
                 
-                # Added 7/9/2011
-                
-                ############################
-                #
-                #  System Check
-                
-                
-                if systemType == 'win':
-                    if x.strip().startswith('objFileGeom 0 0') is True:
-                        # Read outside OBJ file here.
-                        subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
-                        subpath = subpath.strip()
-                        subpath = subpath.replace(':', '\\')                
-                        geompath = '\\'.join(contentloc) + subpath
-                        try:
-                            file = ptl.PT2_open(geompath, 'rt')
-                            for x in file:
-                                PropArray.append(x.strip())           
-                            file.close()                        
-                        except:
-                            print ('File not found:', geompath)
-                            file_error = 'Geometry file not found'
-                        
-                else:
-                    #print ('Linux >1 section') 
-                    if x.strip().startswith('objFileGeom 0 0') is True:
-                       subpath = x.strip().lstrip('objFileGeom 0 0')  #FIXME: borked
-                       subpath = subpath.strip()
-                       subpath = subpath.replace(':', '/')                
-                       geompath = '/'.join(contentloc) + subpath
-                       print ('geompath:', geompath)
-                        #if x.strip().startswith('geomCustom') is True:
-                           #print (x)
-                       
-                       try:
-                           file = ptl.PT2_open(geompath, 'rt')
-                           for x in file:
-                               PropArray.append(x.strip())           
-                           file.close()                        
-                       except:
-                           print ('File not found:', geompath)
-                           file_error = 'Geometry file not found'                       
-
+                if x.strip().startswith('objFileGeom 0 0') is True:
+                    # Read outside OBJ file here.
+                    subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
+                    subpath = subpath.strip()
+                    geompath = rt.find_geometry_path(subpath)
+                    try:
+                        file = ptl.PT2_open(geompath, 'rt')
+                        for x in file:
+                            PropArray.append(x.strip())           
+                        file.close()                        
+                    except:
+                        print ('File not found:', geompath)
+                        file_error = 'Geometry file not found'
 
             file.close()
 
@@ -959,35 +887,12 @@ class LoadPoserProp(bpy.types.Operator):
                     # 
                     #  Texture Map
                     #
-                    
-                    ##########################################################
-                    # Check system
-                    #                      
-                    
                     if info.startswith('textureMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=re.sub(r'^textureMap[\t ]+', '', info)
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
-                        
-                        if systemType.startswith('win'):
-                            tempstr = tempstr.replace(':', '\\')
-                        else:
-                            tempstr = re.sub(r'^[a-zA-Z]*:', '/', tempstr) #drop the drive letter
-                            tempstr = re.sub(r'[:\\]', '/', tempstr)
-                            
-                        if systemType.startswith('win'):                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
-                                texturepath = '\\'.join(contentloc) + tempstr
-                            else:                    
-                                # Sometimes yes:  Sometimes no?:
-                                texturepath = '\\'.join(contentloc) + '\\Runtime\\textures' + tempstr
-                        else:                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
-                                texturepath = '/'.join(contentloc) + tempstr
-                            else:                    
-                                # Sometimes yes:  Sometimes no?:
-                                texturepath = '/'.join(contentloc) + '/Runtime/textures' + tempstr
+                        texturepath = rt.find_texture_path(tempstr)
                                     
     
                         #######################################            
@@ -999,14 +904,9 @@ class LoadPoserProp(bpy.types.Operator):
                             tempfile.close()
                             DIR = os.path.dirname(texturepath)
                             newimage = load_image(texturepath, DIR)
-                            
                             # Create texture
                             # get texture name from image name
-                            if systemType.startswith('win'):   
-                                texture_name = texturepath.split('\\')
-                            else:    
-                                texture_name = texturepath.split('/')                                
-                            texture_name = texture_name[len(texture_name)-1]
+                            texture_name = os.path.basename(texturepath)                        
                             if len(texture_name) > 20:
                                 print ('short name', texture_name[:21])
                                 texture_name = texture_name[:21]
@@ -1021,52 +921,29 @@ class LoadPoserProp(bpy.types.Operator):
                             tex1.image = newimage
                             
                             # Add texture slot to material
-                            if mat1.texture_slots.__contains__(tex1.name):
-                                ts = mat1.texture_slots[tex1.name]
-                                ts.use_map_color_diffuse = True                                
-                            else:
-                                ts = mat1.texture_slots.add()            
-                                ts.texture = tex1
-                                ts.texture_coords = 'UV'
-                                ts.use_map_color_diffuse = True  
+                            ## if mat1.texture_slots.__contains__(tex1.name):
+                            ##     ts = mat1.texture_slots[tex1.name]
+                            ##     ts.use_map_color_diffuse = True                                
+                            ## else:
+                            ##     ts = mat1.texture_slots.add()            
+                            ##     ts.texture = tex1
+                            ##     ts.texture_coords = 'UV'
+                            ##     ts.use_map_color_diffuse = True  
                         except:
                             bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
-                            print ('Texture not found:', texturepath)  
+                            print ('Texture not found 993:', texturepath)  
                                 
 
                     #############################################################
                     # 
                     #  Bump Map
                     #
-                    
-                    ##########################################################
-                    # Check system
-                    #                        
-                    
                     if info.startswith('bumpMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=re.sub(r'^bumpMap[\t ]+', '', info)
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
-                        if systemType.startswith('win'):
-                            tempstr = tempstr.replace(':', '\\')
-                        else:
-                            tempstr = tempstr.replace(':', '/')  
-                            
-                        if systemType.startswith('win'):                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
-                                texturepath = '\\'.join(contentloc) + tempstr
-                            else:                    
-                                # Sometimes yes:  Sometimes no?:
-                                texturepath = '\\'.join(contentloc) + '\\Runtime\\textures' + tempstr
-                        else:                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
-                                texturepath = '/'.join(contentloc) + tempstr
-                            else:                    
-                                # Sometimes yes:  Sometimes no?:
-                                texturepath = '/'.join(contentloc) + '/Runtime/textures' + tempstr
-                                    
-
+                        texturepath = rt.find_texture_path(tempstr)
                         #######################################            
                         # Load image
                         #
@@ -1079,14 +956,8 @@ class LoadPoserProp(bpy.types.Operator):
                             
                             # Create texture
                             # get texture name from image name   
-                            if systemType.startswith('win'):   
-                                texture_name = texturepath.split('\\')
-                            else:    
-                                texture_name = texturepath.split('/')
-                            texture_name = texture_name[len(texture_name)-1]
-                            if len(texture_name) > 20:
-                                print ('short name', texture_name[:21])
-                                texture_name = texture_name[:21]
+                            texture_name = os.path.basename(texturepath)                        
+
                             # create texture
                             try: # check if exists first
                                 tex1 = bpy.data.textures[texture_name]
@@ -1098,61 +969,39 @@ class LoadPoserProp(bpy.types.Operator):
                             tex1.image = newimage
                             
                             # Add texture slot to material
-                            if mat1.texture_slots.__contains__(tex1.name):
-                                ts = mat1.texture_slots[tex1.name]
-                                ts.use_map_normal = True
-                                ts.normal_factor = .025 
-                            else:
-                                ts = mat1.texture_slots.add()            
-                                ts.texture = tex1
-                                ts.texture_coords = 'UV'
-                                ts.use_map_normal = True
-                                ts.use_map_color_diffuse = False   
-                                ts.normal_factor = .025
+                            ## if mat1.texture_slots.__contains__(tex1.name):
+                            ##     ts = mat1.texture_slots[tex1.name]
+                            ##     ts.use_map_normal = True
+                            ##     ts.normal_factor = .025 
+                            ## else:
+                            ##     ts = mat1.texture_slots.add()            
+                            ##     ts.texture = tex1
+                            ##     ts.texture_coords = 'UV'
+                            ##     ts.use_map_normal = True
+                            ##     ts.use_map_color_diffuse = False   
+                            ##     ts.normal_factor = .025
                                 
                             ###########################################
                             # 
                             #  Adjust mat settings for Alpha texture                                    
                             #
                             
-                            mat1.specular_intensity = 0                                  
+                            ## mat1.specular_intensity = 0                                  
                                                              
                         except:
-                            print ('Texture not found:', texturepath)                                  
+                            print ('Texture not found: 1080', texturepath)                                  
                                 
 
                     #############################################################
                     # 
                     #  Alpha Map
                     #
-
-                    ##########################################################
-                    # Check system
-                    #                        
-                    
                     if info.startswith('transparencyMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=re.sub(r'^transparencyMap[\t ]+', '', info)
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
-                        if systemType.startswith('win'):
-                            tempstr = tempstr.replace(':', '\\')
-                        else:
-                            tempstr = tempstr.replace(':', '/')  
-                            
-                        if systemType.startswith('win'):                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
-                                texturepath = '\\'.join(contentloc) + tempstr
-                            else:                    
-                                # Sometimes yes:  Sometimes no?:
-                                texturepath = '\\'.join(contentloc) + '\\Runtime\\textures' + tempstr
-                        else:                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
-                                texturepath = '/'.join(contentloc) + tempstr
-                            else:                    
-                                # Sometimes yes:  Sometimes no?:
-                                texturepath = '/'.join(contentloc) + '/Runtime/textures' + tempstr
-                                    
+                        texturepath = rt.find_texture_path(tempstr)
 
                         #######################################            
                         # Load image
@@ -1166,11 +1015,7 @@ class LoadPoserProp(bpy.types.Operator):
                           
                             # Create texture
                             # get texture name from image name   
-                            if systemType.startswith('win'):   
-                                texture_name = texturepath.split('\\')
-                            else:    
-                                texture_name = texturepath.split('/')
-                            texture_name = texture_name[len(texture_name)-1]
+                            texture_name = os.path.basename(texturepath)                        
                             if len(texture_name) > 20:
                                 print ('short name', texture_name[:21])
                                 texture_name = texture_name[:21]
@@ -1187,61 +1032,39 @@ class LoadPoserProp(bpy.types.Operator):
                             tex1.invert_alpha = True
                             tex1.use_alpha = False
                             
-                            # Add texture slot to material
-                            if mat1.texture_slots.__contains__(tex1.name):
-                                ts = mat1.texture_slots[tex1.name]
-                                ts.use_map_alpha = True 
-                            else:
-                                ts = mat1.texture_slots.add()            
-                                ts.texture = tex1
-                                ts.texture_coords = 'UV'
-                                ts.use_map_alpha = True                                
-                                ts.use_map_color_diffuse = False    
-
-                            ###########################################
-                            # 
-                            #  Adjust mat settings for Alpha texture                                    
-                            #
-                            
-                            mat1.use_transparency = True
-                            mat1.alpha = 0 
-                            mat1.specular_intensity = 0                         
-                                                            
+                        ##     # Add texture slot to material
+                        ##     if mat1.texture_slots.__contains__(tex1.name):
+                        ##         ts = mat1.texture_slots[tex1.name]
+                        ##         ts.use_map_alpha = True 
+                        ##     else:
+                        ##         ts = mat1.texture_slots.add()            
+                        ##         ts.texture = tex1
+                        ##         ts.texture_coords = 'UV'
+                        ##         ts.use_map_alpha = True                                
+                        ##         ts.use_map_color_diffuse = False    
+                        ## 
+                        ##     ###########################################
+                        ##     # 
+                        ##     #  Adjust mat settings for Alpha texture                                    
+                        ##     #
+                        ##     
+                        ##     mat1.use_transparency = True
+                        ##     mat1.alpha = 0 
+                        ##     mat1.specular_intensity = 0                         
+                        ##                                     
                         except:
-                            print ('Texture not found:', texturepath)
+                            print ('Texture not found: 1170', texturepath)
 
                     #############################################################
                     # 
                     #  Reflection Map
                     #
-
-                    ##########################################################
-                    # Check system
-                    #                        
-                    
                     if info.startswith('reflectionMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=re.sub(r'^reflectionMap[\t ]+', '', info)
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
                         tempstr = tempstr.strip('"')
-                        if systemType.startswith('win'):
-                            tempstr = tempstr.replace(':', '\\')
-                        else:
-                            tempstr = tempstr.replace(':', '/')  
-                            
-                        if systemType.startswith('win'):                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
-                                texturepath = '\\'.join(contentloc) + tempstr
-                            else:                    
-                                # Sometimes yes:  Sometimes no?:
-                                texturepath = '\\'.join(contentloc) + '\\Runtime\\textures' + tempstr
-                        else:                            
-                            if tempstr.__contains__('textures') is True or tempstr.__contains__('Textures') is True:
-                                texturepath = '/'.join(contentloc) + tempstr
-                            else:                    
-                                # Sometimes yes:  Sometimes no?:
-                                texturepath = '/'.join(contentloc) + '/Runtime/textures' + tempstr
-                                    
+                        texturepath = rt.find_texture_path(tempstr)                                    
 
                         #######################################            
                         # Load image
@@ -1255,11 +1078,7 @@ class LoadPoserProp(bpy.types.Operator):
                           
                             # Create texture
                             # get texture name from image name   
-                            if systemType.startswith('win'):   
-                                texture_name = texturepath.split('\\')
-                            else:    
-                                texture_name = texturepath.split('/')
-                            texture_name = texture_name[len(texture_name)-1]
+                            texture_name = os.path.basename(texturepath)                        
                             if len(texture_name) > 20:
                                 print ('short name', texture_name[:21])
                                 texture_name = texture_name[:21]
@@ -1277,27 +1096,27 @@ class LoadPoserProp(bpy.types.Operator):
                             #tex1.use_alpha = False
                             
                             # Add texture slot to material
-                            if mat1.texture_slots.__contains__(tex1.name):
-                                ts = mat1.texture_slots[tex1.name]
-                                ts.use_map_mirror = True 
-                            else:
-                                ts = mat1.texture_slots.add()            
-                                ts.texture = tex1
-                                ts.texture_coords = 'UV'
-                                ts.use_map_mirror = True                                
-                                ts.use_map_color_diffuse = False    
+                            ## if mat1.texture_slots.__contains__(tex1.name):
+                            ##     ts = mat1.texture_slots[tex1.name]
+                            ##     ts.use_map_mirror = True 
+                            ## else:
+                            ##     ts = mat1.texture_slots.add()            
+                            ##     ts.texture = tex1
+                            ##     ts.texture_coords = 'UV'
+                            ##     ts.use_map_mirror = True                                
+                            ##     ts.use_map_color_diffuse = False    
 
                             ###########################################
                             # 
                             #  Adjust mat settings for Mirror texture                                    
                             #
                             
-                            mat1.raytrace_mirror.use = True
+                            #mat1.raytrace_mirror.use = True
                             #mat1.alpha = 0 
                             #mat1.specular_intensity = 0                         
                                                             
                         except:
-                            print ('Texture not found:', texturepath)                                                             
+                            print ('Texture not found: 1260', texturepath)                                                             
                                
 ####################################################################################################################
         
