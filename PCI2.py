@@ -1059,14 +1059,14 @@ class CharacterImport(bpy.types.Operator):
         # print ('Number of Morphs:', len(morphs))
 
         if( len(morphs) > 0):
-            sk_basis = ob.shape_key_add(name="Basis")
+            sk_basis = ob.shape_key_add(name="Basis", from_mix=False)
             ob.data.shape_keys.use_relative = False
             for morph in morphs:
                 # print ("Morph:", morph.name, "Size:", len(morph.deltas) )
                 vg_idx = ob.vertex_groups[morph.group].index # get group index
                 vs = [ v for v in ob.data.vertices if vg_idx in [ vg.group for vg in v.groups ] ]
                 
-                sk = ob.vertex_groups[morph.group].id_data.shape_key_add(name=morph.name)
+                sk = ob.vertex_groups[morph.group].id_data.shape_key_add(name=morph.name, from_mix=False)
                 sk.value = morph.value
                 sk.slider_min = morph.min
                 sk.slider_max = morph.max

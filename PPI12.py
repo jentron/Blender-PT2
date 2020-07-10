@@ -867,11 +867,11 @@ class LoadPoserProp(bpy.types.Operator):
             print ('==================================================')    
 
             if( len(morphs) > 0):
-                sk_basis = newobj.shape_key_add(name="Basis")
+                sk_basis = newobj.shape_key_add(name="Basis", from_mix=False)
                 newobj.data.shape_keys.use_relative = False
                 for morph in morphs:
                     print ("Morph:", morph.name, "Size:", len(morph.data) )
-                    sk = newobj.shape_key_add(name=morph.name)
+                    sk = newobj.shape_key_add(name=morph.name, from_mix=False)
                     sk.value = morph.amount
                     sk.slider_min = morph.min
                     sk.slider_max = morph.max
