@@ -6,7 +6,8 @@ class Material:
     def __init__(self, name='Material', overwrite=True):
         self.diffuse = (1.0, 1.0, 1.0, 1.0)
         self.specular = 0.5
-        self.roughness = 0.5        
+        self.roughness = 0.5
+        self.alpha = 1.0
         if(overwrite is True) and ( name in bpy.data.materials ):
             self.name=name
             self.mat = bpy.data.materials[self.name]
@@ -25,11 +26,11 @@ class Material:
         # link nodes
         self.links = self.mat.node_tree.links
             
-        self.useTextures=True
-        self.diffuseText=True #FIXME: Map to a texture class object
-        self.bumpText=True #FIXME: Map to a texture class object
-        self.transparentText=True #FIXME: Map to a texture class object
-        self.hasTransparency=True # set for transparentText or alpha value < 1.0
+        self.useTextures=False
+        self.diffuseText=False #FIXME: Map to a texture class object
+        self.bumpText=False #FIXME: Map to a texture class object
+        self.transparentText=False #FIXME: Map to a texture class object
+        self.hasTransparency=False # set for transparentText or alpha value < 1.0
 
     def createBlenderMaterial(self):
         #lazy typist
@@ -45,6 +46,7 @@ class Material:
         link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
 
         # create the texture mapping nodes
+
         if(self.useTextures):
             node_mapping = nodes.new(type='ShaderNodeMapping')
             node_mapping.location = -1000, 0
@@ -58,6 +60,7 @@ class Material:
             node_texture = nodes.new(type='ShaderNodeTexImage')
             node_texture.location = -600,0
             node_texture.label = 'Diffuse Map'
+            node_texture.image = self.diffuseText
             node_diffuseColor = nodes.new(type='ShaderNodeRGB')
             node_diffuseColor.location = -500,250
             node_diffuseColor.outputs['Color'].default_value=self.diffuse
@@ -75,6 +78,7 @@ class Material:
             node_trtext  = nodes.new(type='ShaderNodeTexImage')
             node_trtext.location = -600,-250
             node_trtext.label = 'Transparent Map'
+            node_trtext.image = self.transparentText
             link = links.new(node_mapping.outputs['Vector'], node_trtext.inputs['Vector'])
             link = links.new(node_trtext.outputs['Color'], node_pbsdf.inputs['Alpha'])
 
@@ -85,6 +89,7 @@ class Material:
             node_bumptext= nodes.new(type='ShaderNodeTexImage')
             node_bumptext.location = -600,-500
             node_bumptext.label = 'Bump Map'
+            node_bumptext.image = self.bumpText
             link = links.new(node_mapping.outputs['Vector'], node_bumptext.inputs['Vector'])
             link = links.new(node_bumptext.outputs['Color'], node_bump.inputs['Height'])
             link = links.new(node_bump.outputs['Normal'], node_pbsdf.inputs['Normal'])

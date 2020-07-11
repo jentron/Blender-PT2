@@ -93,6 +93,7 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 from . import LIBgzip as ptl
 from . import LIBRuntimeFolder as Runtime
 from . import LIBGetStringRes as GetStringRes
+from . import LIBMaterial as matlib
 
 print ('\n')
 print ('--- Starting Poser Character Importer Version 3 ---')
@@ -1043,22 +1044,12 @@ class CharacterImport(bpy.types.Operator):
             for mat in mats:
                 mat_name = mat[0]
                 mesh_name = mesh.name
+                mat1 = matlib.Material(mat_name)
                 #print ('len of mat:', len(mat))
                 
                 # Create material sub
                 #create_material(mat, mat_name, mesh_name, contentloc)
                 for info in mat:
-                    if info.startswith('textureMap '):
-                        print ('info:', info)
-                    try: # check if exists first
-                        mat1 = bpy.data.materials[mat_name]
-                    except:
-                        mat1 = bpy.data.materials.new(mat_name)
-                    
-                    mat1 = bpy.data.materials[mat_name]
-                    ## mat1.use_transparent_shadows = True #OBSOLETE
-                    mat1.use_nodes = True
-
                     ###
                     #
                     #  Set material Color values
@@ -1069,9 +1060,9 @@ class CharacterImport(bpy.types.Operator):
                     if info.startswith('KdColor ') is True:
                         tempstr = info.lstrip('KdColor ')
                         array = [float(s) for s in tempstr.split()]
-                        if len(array) < 3:
+                        if len(array) == 3:
                             array[3] = 0
-                        mat1.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = array
+                        mat1.diffuse = array
                         
 #                    #  Specular Color
 #                    if info.startswith('KsColor ') is True:
@@ -1142,7 +1133,9 @@ class CharacterImport(bpy.types.Operator):
                                 # Use new image
                                 tex1.image = newimage
                             
-                          ##  # Add texture slot to material
+                            # Add texture slot to material
+                            mat1.useTextures=True
+                            mat1.diffuseText=tex1.image
                           ##  if mat1.texture_slots.__contains__(tex1.name):
                           ##      ts = mat1.texture_slots[tex1.name]
                           ##      ts.use_map_color_diffuse = True                                
@@ -1193,7 +1186,9 @@ class CharacterImport(bpy.types.Operator):
                                 # Use new image
                                 tex1.image = newimage
 
-                        ##    # Add texture slot to material
+                            # Add texture slot to material
+                            mat1.useTextures=True
+                            mat1.bumpText=tex1.image
                         ##    if mat1.texture_slots.__contains__(tex1.name):
                         ##        ts = mat1.texture_slots[tex1.name]
                         ##        ts.use_map_normal = True
@@ -1254,6 +1249,10 @@ class CharacterImport(bpy.types.Operator):
                                 # Use new image
                                 tex1.image = newimage
 
+                            # Add texture slot to material
+                            mat1.useTextures=True
+                            mat1.transparentText=tex1.image
+                            mat1.hasTransparency=True
                         ##    tex1.use_calculate_alpha = True
                         ##    tex1.invert_alpha = True
                         ##    tex1.use_alpha = False
@@ -1321,8 +1320,11 @@ class CharacterImport(bpy.types.Operator):
                             #tex1.use_calculate_alpha = True
                             #tex1.invert_alpha = True
                             #tex1.use_alpha = False
-                            
-                        ##    # Add texture slot to material
+
+                            # Add texture slot to material
+                            mat1.useTextures=True
+                            mat1.reflectionText=tex1.image
+                            print('I don\'t do reflective textures')
                         ##    if mat1.texture_slots.__contains__(tex1.name):
                         ##        ts = mat1.texture_slots[tex1.name]
                         ##        ts.use_map_mirror = True 
@@ -1351,7 +1353,7 @@ class CharacterImport(bpy.types.Operator):
                     #print ('True')
                     skip = 1
                 else:
-                    mesh.materials.append(mat1)
+                    mesh.materials.append(mat1.createBlenderMaterial())
                     skip = 1
                     #print ('False')            
                     

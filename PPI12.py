@@ -41,6 +41,7 @@ import errno
 
 from . import LIBgzip as ptl
 from . import LIBRuntimeFolder as Runtime
+from . import LIBMaterial as matlib
 
 # Convenience Imports:
 from mathutils import *
@@ -828,19 +829,11 @@ class LoadPoserProp(bpy.types.Operator):
             for mat in mats:
                 mat_name = mat[0]
                 mesh_name = mesh.name
+                mat1 = matlib.Material(mat_name)
                 
                 # Create material sub
                 #create_material(mat, mat_name, mesh_name, contentloc)
                 for info in mat:
-                    try: # check if exists first
-                        mat1 = bpy.data.materials[mat_name]
-                    except:
-                        mat1 = bpy.data.materials.new(mat_name)
-                    
-                    mat1 = bpy.data.materials[mat_name]
-                    ## mat1.use_transparent_shadows = True #OBSOLETE
-                    mat1.use_nodes = True
-                    
                     ###
                     #
                     #  Set material Color values
@@ -851,9 +844,9 @@ class LoadPoserProp(bpy.types.Operator):
                     if info.startswith('KdColor ') is True:
                         tempstr = re.sub(r'^KdColor[\t ]+', '', info)
                         array = [float(s) for s in tempstr.split()]
-                        if len(array) < 3:
+                        if len(array) == 3:
                             array[3] = 0
-                        mat1.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = array
+                        mat1.diffuse = array
                         
 #                    #  Specular Color
 #                    if info.startswith('KsColor ') is True:
@@ -922,6 +915,9 @@ class LoadPoserProp(bpy.types.Operator):
                                 tex1.image = newimage
                             
                             # Add texture slot to material
+                            mat1.useTextures=True
+                            mat1.diffuseText=tex1.image
+                            print('Added texture', mat1.diffuseText.name, 'and useTextures is ', mat1.useTextures)
                             ## if mat1.texture_slots.__contains__(tex1.name):
                             ##     ts = mat1.texture_slots[tex1.name]
                             ##     ts.use_map_color_diffuse = True                                
@@ -972,6 +968,8 @@ class LoadPoserProp(bpy.types.Operator):
                                 tex1.image = newimage
                             
                             # Add texture slot to material
+                            mat1.useTextures=True
+                            mat1.bumpText=tex1.image
                             ## if mat1.texture_slots.__contains__(tex1.name):
                             ##     ts = mat1.texture_slots[tex1.name]
                             ##     ts.use_map_normal = True
@@ -1031,6 +1029,11 @@ class LoadPoserProp(bpy.types.Operator):
 
                                 # Use new image
                                 tex1.image = newimage
+
+                            # Add texture slot to material
+                            mat1.useTextures=True
+                            mat1.transparentText=tex1.image
+                            mat1.hasTransparency=True
 
                         ##    tex1.use_calculate_alpha = True
                         ##    tex1.invert_alpha = True
@@ -1100,6 +1103,10 @@ class LoadPoserProp(bpy.types.Operator):
                             #tex1.use_alpha = False
                             
                             # Add texture slot to material
+                            mat1.useTextures=True
+                            mat1.reflectionText=tex1.image
+                            print('I don\'t do reflective textures')
+
                             ## if mat1.texture_slots.__contains__(tex1.name):
                             ##     ts = mat1.texture_slots[tex1.name]
                             ##     ts.use_map_mirror = True 
@@ -1128,7 +1135,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #print ('True')
                     skip = 1
                 else:
-                    mesh.materials.append(mat1)
+                    mesh.materials.append(mat1.createBlenderMaterial())
                     skip = 1
                     #print ('False')            
                     
