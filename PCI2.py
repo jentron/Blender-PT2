@@ -1124,8 +1124,6 @@ class CharacterImport(bpy.types.Operator):
                             #print ('texturepath:', texturepath)
                             tempfile = open(texturepath, 'r')
                             tempfile.close()
-                            DIR = os.path.dirname(texturepath)
-                            newimage = load_image(texturepath, DIR)
                             
                             # Create texture
                             # get texture name from image name
@@ -1138,10 +1136,11 @@ class CharacterImport(bpy.types.Operator):
                                 tex1 = bpy.data.textures[texture_name]
                             except:
                                 tex1 = bpy.data.textures.new(texture_name, type='IMAGE')    
-                            tex1 = bpy.data.textures[texture_name]            
-                            
-                            # Use new image
-                            tex1.image = newimage
+                                DIR = os.path.dirname(texturepath)
+                                newimage = load_image(texturepath, DIR)
+
+                                # Use new image
+                                tex1.image = newimage
                             
                           ##  # Add texture slot to material
                           ##  if mat1.texture_slots.__contains__(tex1.name):
@@ -1173,13 +1172,12 @@ class CharacterImport(bpy.types.Operator):
                         #
                         
                         try:
+                            #print ('texturepath:', texturepath)
                             tempfile = open(texturepath, 'r')
                             tempfile.close()
-                            DIR = os.path.dirname(texturepath)
-                            newimage = load_image(texturepath, DIR)
                             
                             # Create texture
-                            # get texture name from image name   
+                            # get texture name from image name
                             texture_name = os.path.basename(texturepath)
                             if len(texture_name) > 20:
                                 print ('short name', texture_name[:21])
@@ -1189,11 +1187,12 @@ class CharacterImport(bpy.types.Operator):
                                 tex1 = bpy.data.textures[texture_name]
                             except:
                                 tex1 = bpy.data.textures.new(texture_name, type='IMAGE')    
-                            tex1 = bpy.data.textures[texture_name]            
-                            
-                            # Use new image
-                            tex1.image = newimage
-                            
+                                DIR = os.path.dirname(texturepath)
+                                newimage = load_image(texturepath, DIR)
+
+                                # Use new image
+                                tex1.image = newimage
+
                         ##    # Add texture slot to material
                         ##    if mat1.texture_slots.__contains__(tex1.name):
                         ##        ts = mat1.texture_slots[tex1.name]
@@ -1234,11 +1233,10 @@ class CharacterImport(bpy.types.Operator):
                         #
                         
                         try:
+                            #print ('texturepath:', texturepath)
                             tempfile = open(texturepath, 'r')
                             tempfile.close()
-                            DIR = os.path.dirname(texturepath)
-                            newimage = load_image(texturepath, DIR)
-                          
+                            
                             # Create texture
                             # get texture name from image name
                             texture_name = os.path.basename(texturepath)
@@ -1250,24 +1248,26 @@ class CharacterImport(bpy.types.Operator):
                                 tex1 = bpy.data.textures[texture_name]
                             except:
                                 tex1 = bpy.data.textures.new(texture_name, type='IMAGE')    
-                            tex1 = bpy.data.textures[texture_name]            
-                            
-                            # Use new image
-                            tex1.image = newimage
-                            tex1.use_calculate_alpha = True
-                            tex1.invert_alpha = True
-                            tex1.use_alpha = False
-                            
-                        #    # Add texture slot to material
-                        #    if mat1.texture_slots.__contains__(tex1.name):
-                        #        ts = mat1.texture_slots[tex1.name]
-                        #        ts.use_map_alpha = True 
-                        #    else:
-                        #        ts = mat1.texture_slots.add()            
-                        #        ts.texture = tex1
-                        #        ts.texture_coords = 'UV'
-                        #        ts.use_map_alpha = True                                
-                        #        ts.use_map_color_diffuse = False    
+                                DIR = os.path.dirname(texturepath)
+                                newimage = load_image(texturepath, DIR)
+
+                                # Use new image
+                                tex1.image = newimage
+
+                        ##    tex1.use_calculate_alpha = True
+                        ##    tex1.invert_alpha = True
+                        ##    tex1.use_alpha = False
+                        ##    
+                        ##    # Add texture slot to material
+                        ##    if mat1.texture_slots.__contains__(tex1.name):
+                        ##        ts = mat1.texture_slots[tex1.name]
+                        ##        ts.use_map_alpha = True 
+                        ##    else:
+                        ##        ts = mat1.texture_slots.add()            
+                        ##        ts.texture = tex1
+                        ##        ts.texture_coords = 'UV'
+                        ##        ts.use_map_alpha = True                                
+                        ##        ts.use_map_color_diffuse = False    
 
                             ###########################################
                             # 
@@ -1297,11 +1297,10 @@ class CharacterImport(bpy.types.Operator):
                         #
                         
                         try:
+                            #print ('texturepath:', texturepath)
                             tempfile = open(texturepath, 'r')
                             tempfile.close()
-                            DIR = os.path.dirname(texturepath)
-                            newimage = load_image(texturepath, DIR)
-                          
+                            
                             # Create texture
                             # get texture name from image name
                             texture_name = os.path.basename(texturepath)
@@ -1313,10 +1312,12 @@ class CharacterImport(bpy.types.Operator):
                                 tex1 = bpy.data.textures[texture_name]
                             except:
                                 tex1 = bpy.data.textures.new(texture_name, type='IMAGE')    
-                            tex1 = bpy.data.textures[texture_name]            
-                            
-                            # Use new image
-                            tex1.image = newimage
+                                DIR = os.path.dirname(texturepath)
+                                newimage = load_image(texturepath, DIR)
+
+                                # Use new image
+                                tex1.image = newimage
+
                             #tex1.use_calculate_alpha = True
                             #tex1.invert_alpha = True
                             #tex1.use_alpha = False
