@@ -131,6 +131,7 @@ class Runtime:
             geometry = self.getGeometryPath(geometry)
         except StopIteration:
             geometry = os.sep.join(tokens[-1:])
+            geometry = self.getSourcePath(geometry)
 
         return(geometry)
 
@@ -181,9 +182,8 @@ if __name__ == '__main__':
         print('Texture', rt.getTexturePath())
         print('Texture w/file', rt.getTexturePath('bob.txt'))
 
-        print(rt.find_texture_path(':Runtime:libraries:Props:aemi1970:boundset007:metalbound007.jpg'))
+        print(rt.find_texture_path(':Runtime:libraries:Props:Something:image.jpg'))
         print(rt.find_geometry_path(':Bob:Runtime:geometries:Something:object.obj'))
-
 
 
 
