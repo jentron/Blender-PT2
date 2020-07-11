@@ -92,6 +92,7 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 from . import LIBgzip as ptl
 from . import LIBRuntimeFolder as Runtime
+from . import LIBGetStringRes as GetStringRes
 
 print ('\n')
 print ('--- Starting Poser Character Importer Version 3 ---')
