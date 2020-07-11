@@ -92,7 +92,6 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 from . import LIBgzip as ptl
 from . import LIBRuntimeFolder as Runtime
-from . import LIBGetStringRes
 
 print ('\n')
 print ('--- Starting Poser Character Importer Version 3 ---')
@@ -1100,7 +1099,7 @@ class CharacterImport(bpy.types.Operator):
                     #  Set Texture values
                     #
                     #############################################################
-
+                    from . import LIBGetStringRes #this has to be here and not at the top for some reason?
                     #############################################################
                     # 
                     #  Texture Map
