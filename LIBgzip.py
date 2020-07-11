@@ -1,6 +1,8 @@
 import gzip
 from pathlib import Path
 import re
+import errno
+import os
 
 def PT2_open(name, mode):
     is_gzip=True
@@ -14,12 +16,12 @@ def PT2_open(name, mode):
         stem = list(myfile.suffix)
         print(stem)
         stem[-1] = 'z'
-        new_file = Path(myfile.parents[0],  myfile.stem + "".join(stem))
+        new_file = Path(myfile.parents[0], myfile.stem + "".join(stem))
 
     if( new_file.exists()):
         pass
     else:
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), p)
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), new_file)
 
     with gzip.open(new_file, mode) as fh:
         try:
