@@ -48,6 +48,8 @@ import PT2_open as ptl
 import RuntimeFolder as Runtime
 import GetStringRes
 import Material as matlib
+from ApplyMorph import ApplyMorph
+from ReadPZMD import *
 
 # Convenience Imports:
 from mathutils import *
@@ -59,13 +61,6 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 print ('\n')
 print ('--- Starting Poser Prop Importer Version 15 ---')
-
-class Morph:
-    def __init__(self):
-        self.data=[]
-        self.min = 0
-        self.max = 1
-        self.name = 'shape'
 
 def adjustvert(objmesh, x, y, z):
     print (objmesh, x,y,z)
@@ -426,9 +421,10 @@ class LoadPoserProp(bpy.types.Operator):
                 elif x.startswith('targetGeom ') is True:
                     morph.name = re.sub(r'^targetGeom[\t ]+', '', x)
                     morphloop = depth
+                    morph.group = prop_name
                     # print ("Morph:", morph.name )
                 elif x.startswith('k ') is True and depth >= morphloop:
-                     morph.amount = float(x.split()[2])
+                     morph.value = float(x.split()[2])
                 elif x.startswith('min ') is True and depth >= morphloop:
                      morph.min = float(x.split()[1])
                 elif x.startswith('max ') is True and depth >= morphloop:
@@ -437,7 +433,11 @@ class LoadPoserProp(bpy.types.Operator):
                     # print('d', x)
                     tempmorph = re.sub(r'^d[\t ]+', '', x)
                     i, dx, dy, dz = [float(s) for s in tempmorph.split()]
-                    morph.data.append( { int(i) : Vector( (dx, dy, dz) ) } )
+                    morph.deltas.append( { int(i) : Vector( (dx, dy, dz) ) } )
+                elif x.startswith('indexes ') is True and depth >= morphloop:
+                     morph.indexes = float(x.split()[1])
+                elif x.startswith('numbDeltas ') is True and depth >= morphloop:
+                     morph.numbDeltas = float(x.split()[1])
                 elif x.startswith ('{'):
                     depth += 1
                     # print('Depth++: ', depth, morphloop, matloop)
@@ -805,21 +805,9 @@ class LoadPoserProp(bpy.types.Operator):
             print ('=         Creating Shapekeys                     =')
             print ('==================================================')    
 
-            if( len(morphs) > 0):
-                sk_basis = newobj.shape_key_add(name="Basis", from_mix=False)
-                newobj.data.shape_keys.use_relative = False
-                for morph in morphs:
-                    print ("Morph:", morph.name, "Size:", len(morph.data) )
-                    sk = newobj.shape_key_add(name=morph.name, from_mix=False)
-                    sk.value = morph.amount
-                    sk.slider_min = morph.min
-                    sk.slider_max = morph.max
-                    
-                    # position each vert FIXME: there must be a better way...
-                    for d in morph.data:
-                        for i, v in d.items():
-                            sk.data[i].co = sk_basis.data[i].co + mtrx_swap @ v 
-                    newobj.data.shape_keys.use_relative = True
+            for morph in morphs:
+                morph.print()
+                ApplyMorph(newobj, morph, mtrx_swap=mtrx_swap )
 
 
             ##########################################################################

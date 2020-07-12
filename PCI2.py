@@ -99,6 +99,8 @@ import PT2_open as ptl
 import RuntimeFolder as Runtime
 import GetStringRes
 import Material as matlib
+from ApplyMorph import ApplyMorph
+from ReadPZMD import *
 
 print ('\n')
 print ('--- Starting Poser Character Importer Version 3 ---')
@@ -114,6 +116,7 @@ bpy.cr2count = 0
 class CR2Class():
 
     geompath = ''
+    morphBinaryFile = ''
     name = ''
 
     class geomData():
@@ -149,25 +152,7 @@ class CR2Class():
             def xfactor(xyz):
                 value=xyz*5
                 return(value)        
-   
-class Morph:
-    def __init__(self):
-        self.deltas=[]
-        self.min = 0
-        self.max = 1
-        self.value = 0
-        self.name = 'shape'
-        self.group = ''
-        self.indexes = -1
-        self.numbDeltas = -1
 
-    def print(self):
-        print ('Morph:', self.name,
-               'Target:', self.group,
-               'Indexes: ', self.indexes,
-               'numbDeltas:', self.numbDeltas )
-
-        
 ###########################################
 #
 #  Import Character Class
@@ -263,6 +248,12 @@ class CharacterImport(bpy.types.Operator):
                 tempstr = tempstr.replace('figureResFile ', '')
                 cr2.geompath = tempstr
                 #print ('GeomFile:', character.geompath)
+
+            elif x.startswith('morphBinaryFile ') is True:
+                tempstr = x
+                tempstr = tempstr.replace('morphBinaryFile ', '')
+                cr2.morphpath = tempstr
+                print ('External Morph File:', cr2.morphpath)
         
         file.close()  
         print ('Number of Morphs:', len(morphcounts))
@@ -993,26 +984,9 @@ class CharacterImport(bpy.types.Operator):
         print ('==================================================')
         # print ('Number of Morphs:', len(morphs))
 
-        if( len(morphs) > 0):
-            sk_basis = ob.shape_key_add(name="Basis", from_mix=False)
-            ob.data.shape_keys.use_relative = False
-            for morph in morphs:
-                # print ("Morph:", morph.name, "Size:", len(morph.deltas) )
-                vg_idx = ob.vertex_groups[morph.group].index # get group index
-                vs = [ v for v in ob.data.vertices if vg_idx in [ vg.group for vg in v.groups ] ]
-                
-                sk = ob.vertex_groups[morph.group].id_data.shape_key_add(name=morph.name, from_mix=False)
-                sk.value = morph.value
-                sk.slider_min = morph.min
-                sk.slider_max = morph.max
-                
-                # position each vert FIXME: there must be a better way...
-                for d in morph.deltas:
-                    for i, v in d.items():
-                        v_idx = vs[i].index
-                        sk.data[v_idx].co = sk_basis.data[v_idx].co + mtrx_swap @ v 
-                ob.data.shape_keys.use_relative = True
-
+        for morph in morphs:
+            ApplyMorph(ob, morph, mtrx_swap=mtrx_swap )
+            # print ("Morph:", morph.name, "Size:", len(morph.deltas) )
 
         doMaterials = True
         if doMaterials:
