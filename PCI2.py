@@ -90,10 +90,15 @@ from bpy_extras import *
 from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 
-from . import LIBgzip as ptl
-from . import LIBRuntimeFolder as Runtime
-from . import LIBGetStringRes as GetStringRes
-from . import LIBMaterial as matlib
+import sys
+local_module_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),'libs')
+print(local_module_path)
+sys.path.append(local_module_path) 
+
+import PT2_open as ptl
+import RuntimeFolder as Runtime
+import GetStringRes
+import Material as matlib
 
 print ('\n')
 print ('--- Starting Poser Character Importer Version 3 ---')
@@ -1080,7 +1085,7 @@ class CharacterImport(bpy.types.Operator):
                     #  Set Texture values
                     #
                     #############################################################
-                    from . import LIBGetStringRes #this has to be here and not at the top for some reason?
+
                     #############################################################
                     # 
                     #  Texture Map
