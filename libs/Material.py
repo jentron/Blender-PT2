@@ -80,7 +80,7 @@ class Material:
             node_trtext.location = -600,-250
             node_trtext.label = 'Transparent Map'
             node_trtext.image = self.transparentText
-            self.transparentText.colorspace_settings.name = 'Non-Color'
+            node_trtext.image.colorspace_settings.name = 'Non-Color'
             link = links.new(node_mapping.outputs['Vector'], node_trtext.inputs['Vector'])
             link = links.new(node_trtext.outputs['Color'], node_pbsdf.inputs['Alpha'])
 
@@ -92,13 +92,13 @@ class Material:
             node_bumptext.location = -600,-500
             node_bumptext.label = 'Bump Map'
             node_bumptext.image = self.bumpText
-            self.bumptext.colorspace_settings.name = 'Non-Color'
+            node_bumptext.image.colorspace_settings.name = 'Non-Color'
             link = links.new(node_mapping.outputs['Vector'], node_bumptext.inputs['Vector'])
             link = links.new(node_bumptext.outputs['Color'], node_bump.inputs['Height'])
             link = links.new(node_bump.outputs['Normal'], node_pbsdf.inputs['Normal'])
         
         if(self.use_transparency):
-            self.mat.blend_method = 'BLEND'
+            self.mat.blend_method = 'HASHED'
             self.mat.shadow_method = 'HASHED'
         
         # return the material
