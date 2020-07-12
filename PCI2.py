@@ -997,14 +997,12 @@ class CharacterImport(bpy.types.Operator):
             #  Materials
             # 
             
-            print ('\n')
             print ('==================================================')
             print ('=         Creating Materials                     =')
             print ('==================================================')    
 
-            #bpy.mat_counter = bpy.mat_counter + 1            
-            #mat_counter = bpy.mat_counter
             mat_counter = 1
+            time_start = time.time()
 
             print ('mats[0]', mats[0])            
                                   
@@ -1016,7 +1014,7 @@ class CharacterImport(bpy.types.Operator):
                 #print ('len of mat:', len(mat))
                 
                 # Create material sub
-                #create_material(mat, mat_name, mesh_name, contentloc)
+                # create_material(mat, mat_name, mesh_name, contentloc)
                 for info in mat:
                     ###
                     #
@@ -1026,34 +1024,91 @@ class CharacterImport(bpy.types.Operator):
             
                     #  Diffuse Color
                     if info.startswith('KdColor ') is True:
-                        tempstr = info.lstrip('KdColor ')
+                        tempstr = info.replace('KdColor ','')
                         array = [float(s) for s in tempstr.split()]
                         if len(array) == 3:
                             array[3] = 0
-                        mat1.diffuse = array
+                        mat1.diffuse_color = array
+
+                    #  Specular Color
+                    elif info.startswith('KsColor ') is True:
+                        tempstr = info.replace('KsColor ','')
+                        array = [float(s) for s in tempstr.split()]
+                        if len(array) == 3:
+                            array[3] = 0
+                        mat1.specular_color = array
+
+                    #  Ambient Color
+                    elif info.startswith('KaColor ') is True:
+                        tempstr = info.replace('KaColor ','')
+                        array = [float(s) for s in tempstr.split()]
+                        if len(array) == 3:
+                            array[3] = 0
+                        mat1.ambient_color = array
+
+                    #  Texture Color
+                    elif info.startswith('TextureColor ') is True:
+                        tempstr = info.replace('TextureColor ','')
+                        array = [float(s) for s in tempstr.split()]
+                        if len(array) == 3:
+                            array[3] = 0
+                        mat1.texture_color = array
+
+                    #  Reflection Color
+                    elif info.startswith('ReflectionColor ') is True:
+                        tempstr = info.replace('ReflectionColor ','')
+                        array = [float(s) for s in tempstr.split()]
+                        if len(array) == 3:
+                            array[3] = 0
+                        mat1.reflection_color = array
+
+                    #  Reflection Strength
+                    elif info.startswith('reflectionStrength ') is True:
+                        tempstr = info.replace('reflectionStrength ', '')
+                        tempstr = tempstr.strip()
+                        mat1.reflect_factor = float(tempstr)
                         
-#                    #  Specular Color
-#                    if info.startswith('KsColor ') is True:
-#                        tempstr = info.lstrip('KsColor ')
-#                        array = [float(s) for s in tempstr.split()]
-#                        if len(array) > 3:
-#                            array.remove(array[3])
-#                        mat1.specular_color = array
-#
-#                    #  Reflection Strength
-#                    if info.startswith('reflectionStrength ') is True:
-#                        tempstr = info.replace('reflectionStrength ', '')
-#                        tempstr = tempstr.strip()
-#                        mat1.raytrace_mirror.reflect_factor = float(tempstr)
-#                        
-                    if info.startswith('tMax ') is True:
+                    elif info.startswith('tMax ') is True:
                         tempstr = info.replace('tMax ','')
                         tempstr = tempstr.strip()
-                        if float(tempstr) > 0:
-                            transparency = 1 - float(tempstr)
-                            mat1.use_transparency = True
-                            mat1.alpha = transparency
-                        
+                        mat1.tMax = float(tempstr)
+
+                    elif info.startswith('tMin ') is True:
+                        tempstr = info.replace('tMin ','')
+                        tempstr = tempstr.strip()
+                        mat1.tMin = float(tempstr)
+
+                    elif info.startswith('tExpo ') is True:
+                        tempstr = info.replace('tExpo ','')
+                        tempstr = tempstr.strip()
+                        mat1.tExpo = float(tempstr)
+
+                    elif info.startswith('NsExponent ') is True:
+                        tempstr = info.replace('NsExponent ','')
+                        tempstr = tempstr.strip()
+                        mat1.ns_exponent = float(tempstr)
+
+                    elif info.startswith('bumpStrength ') is True:
+                        tempstr = info.replace('bumpStrength ','')
+                        tempstr = tempstr.strip()
+                        mat1.bumpStrength = float(tempstr)
+
+                    elif info.startswith('ksIgnoreTexture ') is True:
+                        tempstr = info.replace('ksIgnoreTexture ','')
+                        tempstr = tempstr.strip()
+                        mat1.ks_ignore_texture = float(tempstr)
+
+                    elif info.startswith('reflectThruLights ') is True:
+                        tempstr = info.replace('reflectThruLights ','')
+                        tempstr = tempstr.strip()
+                        mat1.reflect_thru_lights = float(tempstr)
+
+                    elif info.startswith('reflectThruKd ') is True:
+                        tempstr = info.replace('reflectThruKd ','')
+                        tempstr = tempstr.strip()
+                        mat1.reflect_thru_kd = float(tempstr)
+
+
                     #############################################################
                     #
                     #  Set Texture values
@@ -1064,7 +1119,7 @@ class CharacterImport(bpy.types.Operator):
                     # 
                     #  Texture Map
                     #
-                    if info.startswith('textureMap ') is True and info.endswith('NO_MAP') is False:
+                    elif info.startswith('textureMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=info.lstrip('textureMap ')
                         tempstr = tempstr.strip('"')
                         if tempstr.startswith('GetStringRes') is True:
@@ -1100,28 +1155,20 @@ class CharacterImport(bpy.types.Operator):
 
                                 # Use new image
                                 tex1.image = newimage
-                            
+
                             # Add texture slot to material
-                            mat1.useTextures=True
-                            mat1.diffuseText=tex1.image
-                          ##  if mat1.texture_slots.__contains__(tex1.name):
-                          ##      ts = mat1.texture_slots[tex1.name]
-                          ##      ts.use_map_color_diffuse = True                                
-                          ##  else:
-                          ##      ts = mat1.texture_slots.add()            
-                          ##      ts.texture = tex1
-                          ##      ts.texture_coords = 'UV'
-                          ##      ts.use_map_color_diffuse = True  
+                            mat1.diffuse_texture=tex1.image
+
                         except:
                             bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
-                            print ('Texture not found: 1157', texturepath)  
+                            print ('Texture Map not found: %s'%texturepath)  
                                 
 
                     #############################################################
                     # 
                     #  Bump Map
                     #
-                    if info.startswith('bumpMap ') is True and info.endswith('NO_MAP') is False:
+                    elif info.startswith('bumpMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=info.lstrip('bumpMap ')
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
@@ -1155,36 +1202,17 @@ class CharacterImport(bpy.types.Operator):
                                 tex1.image = newimage
 
                             # Add texture slot to material
-                            mat1.useTextures=True
-                            mat1.bumpText=tex1.image
-                        ##    if mat1.texture_slots.__contains__(tex1.name):
-                        ##        ts = mat1.texture_slots[tex1.name]
-                        ##        ts.use_map_normal = True
-                        ##        ts.normal_factor = .025 
-                        ##    else:
-                        ##        ts = mat1.texture_slots.add()            
-                        ##        ts.texture = tex1
-                        ##        ts.texture_coords = 'UV'
-                        ##        ts.use_map_normal = True
-                        ##        ts.use_map_color_diffuse = False   
-                        ##        ts.normal_factor = .025
-                        ##        
-                            ###########################################
-                            # 
-                            #  Adjust mat settings for Alpha texture                                    
-                            #
-                            
-                        #    mat1.specular_intensity = 0                                  
-                                                             
+                            mat1.bump_texture=tex1.image
+
                         except:
-                            print ('Texture not found: 1218', texturepath)                                  
+                            print ('Bump Map not found: %s'%texturepath)
                                 
 
                     #############################################################
                     # 
                     #  Alpha Map
                     #
-                    if info.startswith('transparencyMap ') is True and info.endswith('NO_MAP') is False:
+                    elif info.startswith('transparencyMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=info.lstrip('transparencyMap ')
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
@@ -1210,7 +1238,7 @@ class CharacterImport(bpy.types.Operator):
                             try: # check if exists first
                                 tex1 = bpy.data.textures[texture_name]
                             except:
-                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')    
+                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
                                 DIR = os.path.dirname(texturepath)
                                 newimage = load_image(texturepath, DIR)
 
@@ -1218,41 +1246,16 @@ class CharacterImport(bpy.types.Operator):
                                 tex1.image = newimage
 
                             # Add texture slot to material
-                            mat1.useTextures=True
-                            mat1.transparentText=tex1.image
-                            mat1.use_transparency=True
-                        ##    tex1.use_calculate_alpha = True
-                        ##    tex1.invert_alpha = True
-                        ##    tex1.use_alpha = False
-                        ##    
-                        ##    # Add texture slot to material
-                        ##    if mat1.texture_slots.__contains__(tex1.name):
-                        ##        ts = mat1.texture_slots[tex1.name]
-                        ##        ts.use_map_alpha = True 
-                        ##    else:
-                        ##        ts = mat1.texture_slots.add()            
-                        ##        ts.texture = tex1
-                        ##        ts.texture_coords = 'UV'
-                        ##        ts.use_map_alpha = True                                
-                        ##        ts.use_map_color_diffuse = False    
+                            mat1.transparent_texture=tex1.image
 
-                            ###########################################
-                            # 
-                            #  Adjust mat settings for Alpha texture                                    
-                            #
-                            
-                        #    mat1.use_transparency = True
-                        #    mat1.alpha = 0 
-                        #    mat1.specular_intensity = 0                         
-                                                            
                         except:
-                            print ('Texture not found: 1282', texturepath)
+                            print ('Transparent Map not found: %s'%texturepath)
 
                     #############################################################
                     # 
                     #  Reflection Map
                     #
-                    if info.startswith('reflectionMap ') is True and info.endswith('NO_MAP') is False:
+                    elif info.startswith('reflectionMap ') is True and info.endswith('NO_MAP') is False:
                         tempstr=info.lstrip('reflectionMap ')
                         if tempstr.endswith(' 0 0') is True:
                             tempstr = tempstr.rstrip(' 0 0')
@@ -1285,36 +1288,12 @@ class CharacterImport(bpy.types.Operator):
                                 # Use new image
                                 tex1.image = newimage
 
-                            #tex1.use_calculate_alpha = True
-                            #tex1.invert_alpha = True
-                            #tex1.use_alpha = False
-
                             # Add texture slot to material
-                            mat1.useTextures=True
-                            mat1.reflectionText=tex1.image
-                            print('I don\'t do reflective textures')
-                        ##    if mat1.texture_slots.__contains__(tex1.name):
-                        ##        ts = mat1.texture_slots[tex1.name]
-                        ##        ts.use_map_mirror = True 
-                        ##    else:
-                        ##        ts = mat1.texture_slots.add()            
-                        ##        ts.texture = tex1
-                        ##        ts.texture_coords = 'UV'
-                        ##        ts.use_map_mirror = True                                
-                        ##        ts.use_map_color_diffuse = False    
+                            mat1.reflection_texture=tex1.image
 
-                            ###########################################
-                            # 
-                            #  Adjust mat settings for Mirror texture                                    
-                            #
-                            
-                        ##    mat1.raytrace_mirror.use = True
-                            #mat1.alpha = 0 
-                            #mat1.specular_intensity = 0                         
-                                                            
                         except:
-                            print ('Texture not found: 1345', texturepath)                                                             
-                               
+                            print ('Reflection Map not found: %s'%texturepath)
+
 ####################################################################################################################
         
                 if mesh.materials.__contains__(mat1.name):
@@ -1349,26 +1328,21 @@ class CharacterImport(bpy.types.Operator):
 ##########################################################
 ##########################################################
         
-                        
-        
+    
+            print ('Time to create Materials:', time.time()-time_start)  
+            #print ('\n\n')     
+            #print ('Len of verts:', len(cr2.geomData.verts))   
+            #print ('Sample Vert:', cr2.geomData.verts[0])
+            #print ('Len of faces:', len(cr2.geomData.faces)) 
+            #print ('sample face:', cr2.geomData.faces[0]) 
+            #try:  
+            #    print ('Len of UVVerts:', len(cr2.geomData.UVverts)) 
+            #    print ('sample UVvert:', cr2.geomData.UVverts[0])    
+            #except:
+            #    pass
 
-      
-        bpy.ops.object.mode_set(mode='OBJECT')            
-            
-        '''                             
-        print ('Len of verts:', len(cr2.geomData.verts))   
-        print ('Sample Vert:', cr2.geomData.verts[0])
-        print ('Len of faces:', len(cr2.geomData.faces)) 
-        print ('sample face:', cr2.geomData.faces[0]) 
-        try:  
-            print ('Len of UVVerts:', len(cr2.geomData.UVverts)) 
-            print ('sample UVvert:', cr2.geomData.UVverts[0])    
-        except:
-            pass                   
-        '''
-            
-        
-        print ('=========================================================\n\n')        
+        bpy.ops.object.mode_set(mode='OBJECT')
+        print ('=========================================================\n\n')
         
         ###########################################
         #
