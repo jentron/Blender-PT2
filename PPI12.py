@@ -704,6 +704,10 @@ class LoadPoserProp(bpy.types.Operator):
                     geomface.append(splitverts[0]) # adds first vert index to geom face vert list
                     if len(splitverts) > 1:
                        TempTextureVerts.append(splitverts[1])
+                    # I have encountered files in the wild with some unmapped faces
+                    # so set them to zero so the indexes match
+                    else:
+                        TempTextureVerts.append(0)
 
                 for vert in geomface:
                     temparray.append(int(vert)-1)

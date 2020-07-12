@@ -843,6 +843,10 @@ class CharacterImport(bpy.types.Operator):
                     geomface.append(splitverts[0]) # adds first vert index to geom face vert list
                     if len(splitverts) > 1:
                        TempTextureVerts.append(splitverts[1])
+                    # I have encountered files in the wild with some unmapped faces
+                    # so set them to zero so the indexes match
+                    else:
+                        TempTextureVerts.append(0)
 
                 for vert in geomface:
                     temparray.append(int(vert)-1)
@@ -967,24 +971,9 @@ class CharacterImport(bpy.types.Operator):
                         textureindex = int(textureverts[face.index][k])-1
                         mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
                         k+=1
-                    
+
         import bpy_extras
         bpy_extras.object_utils.object_data_add(context, mesh, operator=None)
-
-##        print ('Len of textureverts:', len(textureverts))
-##        for face in textureverts:
-##            if len(face) > 0 and len(face) < 5:
-##                facenumber = facecount
-##                try:
-##                    mesh.uv_textures[0].data[facenumber].uv1 = UVvertices[int(face[0])-1]
-##                    mesh.uv_textures[0].data[facenumber].uv2 = UVvertices[int(face[1])-1]
-##                    mesh.uv_textures[0].data[facenumber].uv3 = UVvertices[int(face[2])-1]
-##                    if len(face) > 3:
-##                        mesh.uv_textures[0].data[facenumber].uv4 = UVvertices[int(face[3])-1 ]
-##                except:
-##                    pass
-##            facecount = facecount + 1                  
-        
 
         #for face in cr2.geomData.faces:
         #    print (face)  
