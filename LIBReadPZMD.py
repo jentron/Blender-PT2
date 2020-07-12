@@ -119,7 +119,8 @@ def readPZMD(filename):
     return(morphs)
 
 if __name__ == '__main__':
+    import sys
+    print (sys.argv[1])
     logging.basicConfig(level=logging.DEBUG)
-    morphs = readPZMD(filename="P7Kate.pmd")
-    print(type(morphs[0].deltas[0] ) )
-    
+    morphs = readPZMD(filename=sys.argv[1])
+
