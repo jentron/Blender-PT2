@@ -1078,13 +1078,13 @@ class CharacterImport(bpy.types.Operator):
 #                        tempstr = tempstr.strip()
 #                        mat1.raytrace_mirror.reflect_factor = float(tempstr)
 #                        
-#                    if info.startswith('tMax ') is True:
-#                        tempstr = info.replace('tMax ','')
-#                        tempstr = tempstr.strip()
-#                        if float(tempstr) > 0:
-#                            transparency = 1 - float(tempstr)
-#                            mat1.use_transparency = True
-#                            mat1.alpha = transparency
+                    if info.startswith('tMax ') is True:
+                        tempstr = info.replace('tMax ','')
+                        tempstr = tempstr.strip()
+                        if float(tempstr) > 0:
+                            transparency = 1 - float(tempstr)
+                            mat1.use_transparency = True
+                            mat1.alpha = transparency
                         
                     #############################################################
                     #
@@ -1252,7 +1252,7 @@ class CharacterImport(bpy.types.Operator):
                             # Add texture slot to material
                             mat1.useTextures=True
                             mat1.transparentText=tex1.image
-                            mat1.hasTransparency=True
+                            mat1.use_transparency=True
                         ##    tex1.use_calculate_alpha = True
                         ##    tex1.invert_alpha = True
                         ##    tex1.use_alpha = False

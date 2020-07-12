@@ -30,7 +30,7 @@ class Material:
         self.diffuseText=False #FIXME: Map to a texture class object
         self.bumpText=False #FIXME: Map to a texture class object
         self.transparentText=False #FIXME: Map to a texture class object
-        self.hasTransparency=False # set for transparentText or alpha value < 1.0
+        self.use_transparency=False # set for transparentText or alpha value < 1.0
 
     def createBlenderMaterial(self):
         #lazy typist
@@ -43,6 +43,7 @@ class Material:
         node_pbsdf    = self.nodes.new(type='ShaderNodeBsdfPrincipled')
         node_pbsdf.location = 0,0
         node_pbsdf.inputs['Base Color'].default_value = self.diffuse
+        node_pbsdf.inputs['Alpha'].default_value = self.alpha
         link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
 
         # create the texture mapping nodes
@@ -79,6 +80,7 @@ class Material:
             node_trtext.location = -600,-250
             node_trtext.label = 'Transparent Map'
             node_trtext.image = self.transparentText
+            self.transparentText.colorspace_settings.name = 'Non-Color'
             link = links.new(node_mapping.outputs['Vector'], node_trtext.inputs['Vector'])
             link = links.new(node_trtext.outputs['Color'], node_pbsdf.inputs['Alpha'])
 
@@ -90,12 +92,14 @@ class Material:
             node_bumptext.location = -600,-500
             node_bumptext.label = 'Bump Map'
             node_bumptext.image = self.bumpText
+            self.bumptext.colorspace_settings.name = 'Non-Color'
             link = links.new(node_mapping.outputs['Vector'], node_bumptext.inputs['Vector'])
             link = links.new(node_bumptext.outputs['Color'], node_bump.inputs['Height'])
             link = links.new(node_bump.outputs['Normal'], node_pbsdf.inputs['Normal'])
         
-        if(self.hasTransparency):
-            self.mat.blend_method = 'CLIP'
+        if(self.use_transparency):
+            self.mat.blend_method = 'BLEND'
+            self.mat.shadow_method = 'HASHED'
         
         # return the material
         return( self.mat )
