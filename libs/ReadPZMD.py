@@ -19,8 +19,8 @@ class Morph:
         self.value = 0
         self.name = 'shape'
         self.group = ''
-        self.indexes = -1
-        self.numbDeltas = -1
+        self.indexes = -1    # this is the number of vertexes in the morph! ITS BACKWARDS
+        self.numbDeltas = -1 # this is the number of vertexes in target!
         self.fileOffset = -1
 
     def print(self):
@@ -80,38 +80,38 @@ def readPZMD(filename):
         morph.group=(file.read(bpl_length)).decode("ascii")
         
         ## 4 bytes number of verts in group
-        morph.indexes=int.from_bytes(file.read(4), byteorder='big', signed=False)
+        morph.numbDeltas=int.from_bytes(file.read(4), byteorder='big', signed=False)
     
         ## 4 bytes numDeltas
         morph.fileOffset=int.from_bytes(file.read(4), byteorder='big', signed=False)
         morphs.append( morph )
     
-    # Calculate numDeltas by finding the file offset of the next morph, subtract
+    # Calculate number of indexes by finding the file offset of the next morph, subtract
     # the file offset of this morph, subtract 4 for the size, then divide by 16
     for i in range(morphs_count-1):
-        morphs[i].numbDeltas=int( (morphs[i+1].fileOffset - morphs[i].fileOffset - 4) / 16 )
+        morphs[i].indexes=int( (morphs[i+1].fileOffset - morphs[i].fileOffset - 4) / 16 )
         morphs[i].log()
     
     # handle last morph separately
-    morphs[-1].numbDeltas=int( (filesize - morphs[-1].fileOffset - 4) / 16 )
+    morphs[-1].indexes=int( (filesize - morphs[-1].fileOffset - 4) / 16 )
     morphs[-1].log()
     
     for morph in morphs:
         file.seek(morph.fileOffset)
-        numbDeltas = int.from_bytes(file.read(4), byteorder='big', signed=False)
-        if numbDeltas == morph.numbDeltas:
-            logger.debug('%s numbDeltas matched!' % morph.name)
+        indexes = int.from_bytes(file.read(4), byteorder='big', signed=False)
+        if indexes == morph.indexes:
+            logger.debug('%s indexes count matched!' % morph.name)
         ## ## 4 bytes index 3x4 bytes delta
-            for i in range(morph.numbDeltas):
+            for i in range(morph.indexes):
                 delta = file.read(16)
                 idx=int.from_bytes(delta[0:4], byteorder='big', signed=False)
                 vect=struct.unpack('>fff', delta[4:17])
                 morph.deltas.append( { int(idx) : vect } )
             # print(idx, vect)
-            if numbDeltas == len(morph.deltas):
-                logger.debug('%s all deltas read!'%morph.name )
+            if indexes == len(morph.deltas):
+                logger.debug('%s all delta indexes read!'%morph.name )
         else:
-            logger.critical('Expected %d deltas but found %d' %(morph.numbDeltas, numbDeltas) )
+            logger.critical('Expected %d deltas but found %d' %(morph.indexes, indexes) )
             raise ValueError('Morphs were not parsed correctly!')
     
     file.close()
