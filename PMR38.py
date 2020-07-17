@@ -187,16 +187,18 @@ class Read_Mat(bpy.types.Operator):
                 
             elif line.startswith('{') is True and readcomps is True:
                 depth += 1
+                #skip = 1
                
                 
             elif line.startswith('}') is True and depth > 0:
                 depth -= 1
+                #skip = 1
                 
             if readcomps == True and skip != 1:
                 #print(depth, line)
-                comps.append(line.split()) 
+                comps.append([depth, line.split()]) 
                
-            if depth == 0 and readcomps is True and skip != 1:
+            if depth == 0 and readcomps is True and len(comps) > 0:
                 readcomps=False
                 raw_mats.append([mat_name, comps])
                 mat_name = ''
@@ -208,12 +210,16 @@ class Read_Mat(bpy.types.Operator):
         # Displays Mat Array
         #                 
         print ('\n\nFinished creating array...\n')
-        #for mat in raw_mats:
-        #    print (mat[0])                
-        #    for comp in mat[1]:
-        #        print (comp)
-        #    print ('\n')
-##
+        dumpfile=None
+        dumpfile=open(r'c:\tmp\dumpfile.txt', 'wt')
+        if dumpfile:
+            for mat in raw_mats:
+                print (mat[0], file=dumpfile)
+                for comp in mat[1]:
+                    print (comp, file=dumpfile)
+                print ('\n', file=dumpfile)
+            dumpfile.close()
+
 ##
 ## At this point we need to call the material parser with raw_mats and get the parsed results back
 ##

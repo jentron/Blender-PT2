@@ -19,9 +19,29 @@ class nodeValue(list):
         
         return(' '.join(map(str, self)))
 
+class material():
+    name=''
+    blender_name=''
+    p4={}
+    shaderTree={}
+    
+    def write(self, depth=0, file=sys.stdout ):
+        prefix='\t'*depth
+        print('%smaterial %s'%(prefix, self.name), file=file)
+        print( '%s\t{'%(prefix,), file=file)
+        for key in self.p4.keys():
+            print('%s\t%s %s'%(prefix, key, self.p4[key]), file=file)
+        self.shaderTree.write(depth=depth+1, file=file)
+        
+    def __init__(self, name='Material'):
+        self.name=name
+    
+    def __str__(self):
+        ret='\n'.join([self.name, self.blender_name, str(self.p4), str(self.shaderTree)] )
+        return(ret)
 
 class shaderTree():
-    nodes=[]
+    nodes={}
     fireflyRoot  = None  # FIXME: These point to a valid shader node name
     superflyRoot = None
     
@@ -29,8 +49,8 @@ class shaderTree():
         prefix='\t'*depth
         print('%sshaderTree'%(prefix, ), file=file)
         print( '%s\t{'%(prefix,), file=file)
-        for node in self.nodes:
-            node.write(depth+1, file)
+        for key in self.nodes.keys():
+            self.nodes[key].write(depth+1, file)
 # Note about any material with just 1 root node:
 # Both Superfly and Firefly boxes need to be checked when 
 # there is only 1 root node in any material.          
@@ -43,7 +63,7 @@ class baseNode():
     type = 'baseNode'
     key  = 'baseNode'
     params = {'pos':nodeValue((0, 0))}
-    nodeInputs = []
+    nodeInputs = {}
     
     def __init__(self, node_type, node_key=None, name=None, pos=nodeValue((0,0)) ):
         self.type = node_type
@@ -55,7 +75,7 @@ class baseNode():
             self.key = node_key
         else:
             self.key  = node_type # append a _# if more than one of a node type exists
-        self.nodeInputs=[]
+        self.nodeInputs={}
         
     def __str__(self):
         return(self.type+':'+self.key)
@@ -67,8 +87,8 @@ class baseNode():
         print( '%s\tname "%s"'%(prefix, self.name), file=file)
         for param in self.params:
             print('%s\t%s'%(prefix,param), self.params[param], file=file )
-        for nodeInput in self.nodeInputs:
-            nodeInput.write(depth+1, file)
+        for key in self.nodeInputs.keys():
+            self.nodeInputs[key].write(depth+1, file)
         
         print( '%s\t}'%(prefix,), file=file)        
 
@@ -124,32 +144,32 @@ if __name__ == '__main__':
     bn.key ="CyclesSurface"
     bn.params['pos'] = nodeValue([570, 62])
     bn.params['advancedInputsCollapsed']= 0
-    bn.nodeInputs.append(nodeInput('Surface', 
-                                   value=nodeValue([1, 1, 1])))
+    bn.nodeInputs['Surface'] = nodeInput('Surface', 
+                                   value=nodeValue([1, 1, 1]))
     
-    bn.nodeInputs.append(nodeInput('Volume', 
-                                   value=nodeValue([1, 1, 1])))
+    bn.nodeInputs['Volume'] = nodeInput('Volume', 
+                                   value=nodeValue([1, 1, 1]))
 
-    bn.nodeInputs.append(nodeInput('Displacement', 
+    bn.nodeInputs['Displacement'] = nodeInput('Displacement', 
                                    name='Displacement',
-                                   value=nodeValue([0.1, 0, -1])))
-    st.nodes.append(bn)
+                                   value=nodeValue([0.1, 0, -1]))
+    st.nodes[bn.key] = bn
 
     bn=baseNode('TestNode')
     bn.params['pos'] = nodeValue([10,10])
 
-    bn.nodeInputs.append(nodeInput('TestNodeInput', 
-                                   value=nodeValue([0.1, 0.2, 0.3])))
+    bn.nodeInputs['TestNodeInput'] = nodeInput('TestNodeInput', 
+                                   value=nodeValue([0.1, 0.2, 0.3]))
     
-    bn.nodeInputs.append(nodeInput('TestNodeInput2', 
+    bn.nodeInputs['TestNodeInput2'] = nodeInput('TestNodeInput2', 
                                    value=nodeValue([0, -1, 10000]),
-                                   exposedAs='something'))
+                                   exposedAs='something')
 
-    bn.nodeInputs.append(nodeInput('Transparency_Max', 
+    bn.nodeInputs['Transparency_Max'] = nodeInput('Transparency_Max', 
                                    name='Transparency',
-                                   value=nodeValue([0, -1, 10000])))
+                                   value=nodeValue([0, -1, 10000]))
                          
-    st.nodes.append(bn)
+    st.nodes[bn.key] = bn
     
     ffile=open(r'c:\tmp\bob.txt', 'wt')    
     st.write(depth=1, file=ffile)
