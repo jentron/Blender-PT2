@@ -31,15 +31,11 @@ class shaderTree():
         print( '%s\t{'%(prefix,), file=file)
         for node in self.nodes:
             node.write(depth+1, file)
-            
-        if self.fireflyRoot:
-            print( '%s\tfireflyRoot "%s"'%(prefix, self.fireflyRoot), file=file )
-        else:
-            print( '%s\tfireflyRoot NO_NODE'%(prefix,), file=file )
-        if self.superflyRoot:
-            print( '%s\tsuperflyRoot "%s"'%(prefix, self.superflyRoot), file=file )
-        else:
-            print( '%s\tsuperflyRoot NO_NODE'%(prefix,), file=file )
+# Note about any material with just 1 root node:
+# Both Superfly and Firefly boxes need to be checked when 
+# there is only 1 root node in any material.          
+        print( '%s\tfireflyRoot "%s"'%(prefix, self.fireflyRoot), file=file )
+        print( '%s\tsuperflyRoot "%s"'%(prefix, self.superflyRoot), file=file )
         print( '%s\t}'%(prefix,), file=file)        
 
 class baseNode():

@@ -2,6 +2,7 @@
 # Simplified BSD License, see http://www.opensource.org/licenses/
 #-----------------------------------------------------------------------------
 # Copyright (c) 2011-2012, HEB Ventures, LLC
+# Copyright (c) 2020, Ronald Jensen
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without 
@@ -45,30 +46,33 @@
 
 ###################################################
 #
-#  Poser Mat Reader Version 11
+#  Poser Mat Reader Version 12
 #  1/8/2012
 #  www.blender3dclub.com
 #
 ###################################################
 
 ##########################################################
-# Check system
-#  
-
-
 
 import bpy
 import time
-import sys
 import os
 from bpy_extras import *
 from bpy_extras.image_utils import load_image
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 
+## Setup PT2/libs as a module path:
+import sys
+local_module_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),'libs')
+print(local_module_path)
+sys.path.append(local_module_path)
+
+import PT2_open as ptl
+import RuntimeFolder as Runtime
+import Material as matlib
+
 print ('\n')
-print ('--- Starting Poser Mat Reader Version 2 ---')
-systemType = sys.platform
-print ('System Type:', systemType)
+print ('--- Starting Poser Mat Reader Version 3 ---')
 
 # ------------ Missing texture pup -----------------------
 class ErrorPup(bpy.types.Operator):
@@ -102,75 +106,14 @@ class MatPopper(bpy.types.Operator):
 
         return {'FINISHED'}
 
-
-    
-
-
 # -----------------------------------------------------------
 
-def find_file(poserfile, selffilepath):
-    poserfile = poserfile.strip('"')
-    print ('Poser File:', poserfile)
-    print ('SelfFilePath:', selffilepath)
-    if systemType == 'win32':
-        temp = selffilepath.split('\\')
-        temp2 = poserfile.lstrip(':').replace(':', '\\')
-        if temp2.startswith('runtime') is False and temp2.startswith('Runtime') is False:
-            if temp2.startswith('textures') is False and temp2.startswith('Textures') is False:
-                temp2 = 'textures\\' + temp2
-            temp2 = 'runtime\\' + temp2
-        print ('temp2:', temp2)            
-        comp_path = ''
-        #print ('temp=', temp)
-        complete = False
-        for temp3 in temp:
-            if temp3 == 'Runtime' or temp3 == 'runtime':
-                #comp_path = comp_path + temp3 + '\\'
-                comp_path = comp_path + temp2
-                complete = True
-            #if temp3 == 'Textures' or temp3 == 'textures':
-                #comp_path = comp_path + temp3 + '\\'
-            #    comp_path = comp_path + temp2
-            #    complete = True                
-                
-            else:
-                if complete == False:
-                    comp_path = comp_path + temp3 + '\\'
-        print ('comp_path:', comp_path) 
-        
-    if systemType == 'linux2':
-        temp = selffilepath.split('/')
-        temp2 = poserfile.lstrip(':').replace(':', '/')
-        if temp2.startswith('runtime') is False and temp2.startswith('Runtime') is False:
-            if temp2.startswith('textures') is False and temp2.startswith('Textures') is False:
-                temp2 = 'textures/' + temp2
-            temp2 = 'runtime/' + temp2
-        print ('temp2:', temp2)            
-        comp_path = ''
-        #print ('temp=', temp)
-        complete = False
-        for temp3 in temp:
-            if temp3 == 'Runtime' or temp3 == 'runtime':
-                #comp_path = comp_path + temp3 + '\\'
-                comp_path = comp_path + temp2
-                complete = True
-            #if temp3 == 'Textures' or temp3 == 'textures':
-                #comp_path = comp_path + temp3 + '\\'
-            #    comp_path = comp_path + temp2
-            #    complete = True                
-                
-            else:
-                if complete == False:
-                    comp_path = comp_path + temp3 + '/'
-        print ('comp_path:', comp_path)            
-                   
-         
-    file_location = comp_path
+def find_file(poser_file, self_file_path):
+    rt=Runtime(self_file_path)
+    file_location = rt.find_texture_path(poser_file)
     return(file_location)
-
 # -----------------------------------------------------------
-       
-    
+
 
 class Save_Mat(bpy.types.Operator):
     '''Save Poser material file for this object'''
@@ -207,10 +150,7 @@ class Read_Mat(bpy.types.Operator):
     filename_ext = ".pp2"
     #filter_glob = StringProperty(default="*.pp2", options={'HIDDEN'})    
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
-    
 
-    
-    
     @classmethod
     def poll(cls, context):
         return context.active_object != None
@@ -223,7 +163,7 @@ class Read_Mat(bpy.types.Operator):
         # Read Mat File
         # 
         
-        file = open(self.filepath, 'r')
+        file = ptl.PT2_open(self.filepath, 'rt')
         lines = []
         for x in file:
             lines.append(x.strip())
@@ -705,12 +645,11 @@ class PT2_PT_Mat_Reader(bpy.types.Panel):
            row.label(text='No object Selected')
         row = layout.row()       
         #row.label(text=bpy.PoserTexturePath)             
-        #row.operator("save.mat", icon = "DISK_DRIVE", text = 'Save Mat File')
-	
+        row.operator("save.mat", icon = "DISK_DRIVE", text = 'Save Mat File')
         row.operator("read.mat", icon = "DISK_DRIVE", text = 'Read Mat File')   
         row = layout.row()                     
         
-	#row.operator("mat.popper", text = 'Mat Popper')
+        #row.operator("mat.popper", text = 'Mat Popper')
         #row.operator("import.poser_cr2", icon = "ARMATURE", text = 'Import Character')
         
 
