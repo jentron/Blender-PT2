@@ -173,9 +173,9 @@ class Read_Mat(bpy.types.Operator):
         mat = ''
         comps = []
         readcomps = False
+        depth = 0
         
         for line in lines:
-            line = line.strip()
             #print (line)
             skip = 0
             if line.startswith('material') is True:
@@ -185,19 +185,23 @@ class Read_Mat(bpy.types.Operator):
                 print ('Mat Name:', mat)
                 skip = 1
                 
-            elif line.startswith('{') is True:
-                skip = 1
+            elif line.startswith('{') is True and readcomps is True:
+                depth += 1
                
                 
-            elif line.startswith('}') is True and readcomps == True:
-                readcomps = False
+            elif line.startswith('}') is True and depth > 0:
+                depth -= 1
+                
+            if readcomps == True and skip != 1:
+                #print(depth, line)
+                comps.append(line.split()) 
+               
+            if depth == 0 and readcomps is True and skip != 1:
+                readcomps=False
                 mats.append([mat, comps])
                 mat = ''
                 comps = []
                 
-            if readcomps == True and skip != 1:
-                comps.append(line.split())                
-               
 
         #########################################
         #  
