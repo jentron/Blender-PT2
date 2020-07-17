@@ -70,6 +70,8 @@ sys.path.append(local_module_path)
 import PT2_open as ptl
 import RuntimeFolder as Runtime
 import Material as matlib
+import shaderTrees as st
+import shaderTreeParser as stp
 
 print ('\n')
 print ('--- Starting Poser Mat Reader Version 3 ---')
@@ -223,7 +225,18 @@ class Read_Mat(bpy.types.Operator):
 ##
 ## At this point we need to call the material parser with raw_mats and get the parsed results back
 ##
-##
+        dumpfile=None
+        dumpfile=open(r'c:\tmp\dumpfile.mc6', 'wt')
+        
+        mats={}
+        for raw_mat in raw_mats:
+            mats[raw_mat[0]] = stp.parseMaterial( iter(raw_mat[1]), raw_mat[0] )
+            if dumpfile:
+                mats[raw_mat[0]].write(depth=1, file=dumpfile)
+        
+        dumpfile.close()
+        
+        
         #########################################
         #  
         # Change / Create Mats for selected Object:
