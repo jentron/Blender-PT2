@@ -169,9 +169,9 @@ class Read_Mat(bpy.types.Operator):
             lines.append(x.strip())
         file.close() 
 
-        mats = []         
-        mat = ''
-        comps = []
+        raw_mats = [] # an array of the unparsed materials
+        mat_name = ''
+        comps = []    # a list of the unparsed lines
         readcomps = False
         depth = 0
         
@@ -180,9 +180,9 @@ class Read_Mat(bpy.types.Operator):
             skip = 0
             if line.startswith('material') is True:
                 #print ('Mat:', line.replace('material', ''))
-                mat = line.replace('material', '').strip()
+                mat_name = line.replace('material', '').strip()
                 readcomps = True # Turn on component reader
-                print ('Mat Name:', mat)
+                print ('Mat Name:', mat_name)
                 skip = 1
                 
             elif line.startswith('{') is True and readcomps is True:
@@ -198,8 +198,8 @@ class Read_Mat(bpy.types.Operator):
                
             if depth == 0 and readcomps is True and skip != 1:
                 readcomps=False
-                mats.append([mat, comps])
-                mat = ''
+                raw_mats.append([mat_name, comps])
+                mat_name = ''
                 comps = []
                 
 
@@ -208,12 +208,16 @@ class Read_Mat(bpy.types.Operator):
         # Displays Mat Array
         #                 
         print ('\n\nFinished creating array...\n')
-        #for mat in mats:
+        #for mat in raw_mats:
         #    print (mat[0])                
         #    for comp in mat[1]:
         #        print (comp)
         #    print ('\n')
-
+##
+##
+## At this point we need to call the material parser with raw_mats and get the parsed results back
+##
+##
         #########################################
         #  
         # Change / Create Mats for selected Object:
