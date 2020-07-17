@@ -486,7 +486,7 @@ def register():
     #bpy.utils.register_class(SelectFolder2)           
 
 def unregister():
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.utils.unregister_class(PT2_PT_Poser_Browser)   
     bpy.utils.unregister_class(open_dir)     
     bpy.utils.unregister_class(up_button)    
