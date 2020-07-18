@@ -2,7 +2,7 @@ import shaderTreeParser as stp
 import PT2_open as ptl 
 
 ## lexer=D.texts['shaderTreesLexer.py'].as_module()
-## mat=lexer.shaderTreeLexer(r'c:\tmp\Runtime\Libraries\materials\TransparentBsdf.mt5', dumpfilepath=r'c:\tmp\TransparentBsdf.mt5')
+## mat=lexer.shaderTreeLexer(r'c:\tmp\Runtime\Libraries\materials\Geep\TransparentBsdf.mt5', dumpfilepath=r'c:\tmp\TransparentBsdf.mt5')
 
 def shaderTreeLexer(filepath, dumpfilepath=None, rawdumpfilepath=None):
     ''' Read in a Poser file and extract the material section 
@@ -79,14 +79,18 @@ def shaderTreeLexer(filepath, dumpfilepath=None, rawdumpfilepath=None):
 
     dumpfile=None
     if dumpfilepath:
-        dumpfile=open(dumpfilepath, 'wt')
-    
+        dumpfile=open(dumpfilepath, 'wt', newline='\n')
+        # Header
+        print('{\n\nversion\n\t{\n\tnumber 11\n\tbuild 000\n\t}\nactor $CURRENT\n\t{', file=dumpfile)
+
     mats={}
     for raw_mat in raw_mats:
         mats[raw_mat[0]] = stp.parseMaterial( iter(raw_mat[1]), raw_mat[0] )
         if dumpfile:
             mats[raw_mat[0]].write(depth=1, file=dumpfile)
     
+    # Footer
+    print('\t}\n}', file=dumpfile)
     dumpfile.close()
     return(mats)
 

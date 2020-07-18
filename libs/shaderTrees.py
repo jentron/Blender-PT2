@@ -19,6 +19,8 @@ class nodeValue(list):
         
         return(' '.join(map(str, self)))
 
+p4_mapNames = ['textureMap', 'bumpMap', 'reflectionMap', 'transparencyMap']
+
 class material():
     def __init__(self, name='Material'):
         self.name=name
@@ -33,7 +35,10 @@ class material():
         print('%smaterial %s'%(prefix, self.name), file=file)
         print( '%s\t{'%(prefix,), file=file)
         for key in self.p4.keys():
-            print('%s\t%s %s'%(prefix, key, self.p4[key]), file=file)
+            if key in p4_mapNames and self.p4[key] != 'NO_MAP':
+                print('%s\t%s "%s"'%(prefix, key, self.p4[key]), file=file)
+            else:
+                print('%s\t%s %s'%(prefix, key, self.p4[key]), file=file)
         self.shaderTree.write(depth=depth+1, file=file)
 # Note about any material with just 1 root node:
 # Both Superfly and Firefly boxes need to be checked when 
@@ -73,7 +78,10 @@ class baseNode():
     def __init__(self, node_type, node_key=None, name=None, pos=nodeValue((0,0)) ):
         self.params = {'pos':nodeValue((0, 0))}
         self.nodeInputs = {}
+        self.nodeOutputs ={}
+        self.subTrees = []
         self.type = node_type
+        self.selectedOutput = None
         if(name):
             self.name=name
         else:
@@ -94,11 +102,31 @@ class baseNode():
         print( '%s\tname "%s"'%(prefix, self.name), file=file)
         for param in self.params:
             print('%s\t%s'%(prefix,param), self.params[param], file=file )
+        for key in self.nodeOutputs.keys():
+            self.nodeOutputs[key].write(depth+1, file)
+        if self.selectedOutput:
+            print('%s\tselectedOutput %s'%(prefix,self.selectedOutput), file=file )
         for key in self.nodeInputs.keys():
             self.nodeInputs[key].write(depth+1, file)
+        for t in self.subTrees:
+            t.write(depth+1, file)
         
         print( '%s\t}'%(prefix,), file=file)        
 
+class nodeOutput():
+    def __init__(self, node_type):
+        self.name = None
+        self.type = node_type
+        self.exposedAs = None    # alternate name
+    def write(self, depth=0, file=sys.stdout):
+        prefix='\t'*depth
+        print('%soutput "%s"'%(prefix, self.type), file=file)
+        print( '%s\t{'%(prefix,), file=file)
+        if(self.name):
+            print( '%s\tname "%s"'%(prefix, self.name), file=file)
+        if(self.exposedAs):
+            print( '%s\texposedAs "%s"'%(prefix,self.exposedAs,), file=file)
+        print( '%s\t}'%(prefix,), file=file)        
 
 class nodeInput():
     
@@ -134,7 +162,7 @@ class nodeInput():
         print( '%s\tparmG'%(prefix,), (self.parmG if self.parmG else 'NO_PARM'), file=file)
         print( '%s\tparmB'%(prefix,), (self.parmB if self.parmB else 'NO_PARM'), file=file)
         print( '%s\tnode'%(prefix,),  ('"'+str(self.node)+'"'  if self.node  else 'NO_NODE'), file=file)
-        print( '%s\tfile'%(prefix,),  (self.file  if self.file  else 'NO_MAP'),  file=file)
+        print( '%s\tfile'%(prefix,),  ('"%s"'%self.file  if self.file  else 'NO_MAP'),  file=file)
         if(self.exposedAs):
             print( '%s\texposedAs "%s"'%(prefix,self.exposedAs,), file=file)
         print( '%s\t}'%(prefix,), file=file)        
