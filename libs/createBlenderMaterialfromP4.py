@@ -4,12 +4,49 @@
 import bpy
 import RuntimeFolder as Runtime
 
-def getTexture( texturePath ):
+def getTexture( texturePath, runtime ):
     if texturePath == 'NO_MAP':
         return(None)
-    return(None)
+    
+    if texturePath.endswith(' 0 0') is True: # this should be done elsewhere, like runtime
+        texturePath = texturePath.rstrip(' 0 0')
+    
+    file_location = runtime.find_texture_path(texturePath)
+    try:
+        #print ('texturePath:', texturePath)
+        tempfile = open(texturePath, 'r')
+        tempfile.close()
+        
+        # Create texture
+        # get texture name from image name
+        texture_name = os.path.basename(texturePath)
+        if len(texture_name) > 20:
+            print ('short name', texture_name[:21])
+            texture_name = texture_name[:21]
+        # create texture
+        try: # check if exists first
+            tex1 = bpy.data.textures[texture_name]
+        except:
+            tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
+            DIR = os.path.dirname(texturePath)
+            newimage = load_image(texturePath, DIR)
 
-def createBlenderMaterialfromP4(name, mat, overwrite=False):
+            # Use new image
+            tex1.image = newimage
+
+        # Add texture slot to material
+        mat1.diffuse_texture=tex1.image
+
+    except:
+        bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
+        print ('Texture Map not found: %s'%texturePath)
+        tex1=None #fixme: this will cause the Texture setup to not happen
+
+
+    return(tex1)
+
+
+def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
     try:
         diffuse_color   = mat.p4['KdColor']
         specular_color  = mat.p4['KsColor']
@@ -29,10 +66,10 @@ def createBlenderMaterialfromP4(name, mat, overwrite=False):
         raise ValueError('Function requires a shaderTree material')
 
     # load the textures
-    diffuse_texture    = getTexture(mat.p4['textureMap'])
-    bump_texture       = getTexture(mat.p4['bumpMap'])
-    transparent_texture= None # getTexture(mat.p4['reflectionMap'])
-    reflection_texture = getTexture(mat.p4['transparencyMap'])
+    diffuse_texture    = getTexture(mat.p4['textureMap'], runtime)
+    bump_texture       = getTexture(mat.p4['bumpMap'], runtime)
+    reflection_texture = None # getTexture(mat.p4['reflectionMap'], runtime)
+    transparent_texture = getTexture(mat.p4['transparencyMap'], runtime)
 
     # Set custom values
     alpha = 1 - tMax
@@ -68,6 +105,8 @@ def createBlenderMaterialfromP4(name, mat, overwrite=False):
     node_pbsdf.location = 0,0
     node_pbsdf.inputs['Base Color'].default_value = diffuse_color
     node_pbsdf.inputs['Alpha'].default_value = alpha
+    node_pbsdf.inputs['Roughness'].default_value = roughness
+    node_pbsdf.inputs['Specular'].default_value = specular
     link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
 
     # create the texture mapping nodes
@@ -113,7 +152,7 @@ def createBlenderMaterialfromP4(name, mat, overwrite=False):
     if(bump_texture):
         node_bump    = nodes.new(type='ShaderNodeBump')
         node_bump.location = -300,-500
-        node_bump.inputs['Strength'].default_value = mat.p4['bumpStrength']
+        node_bump.inputs['Strength'].default_value = bumpStrength
         node_bumptext= nodes.new(type='ShaderNodeTexImage')
         node_bumptext.location = -600,-500
         node_bumptext.label = 'Bump Map'

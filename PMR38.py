@@ -113,10 +113,10 @@ class MatPopper(bpy.types.Operator):
 
 # -----------------------------------------------------------
 
-def find_file(poser_file, self_file_path):
-    rt=Runtime(self_file_path)
-    file_location = rt.find_texture_path(poser_file)
-    return(file_location)
+# def find_file(poser_file, self_file_path):
+#     rt=Runtime(self_file_path)
+#     file_location = rt.find_texture_path(poser_file)
+#     return(file_location)
 # -----------------------------------------------------------
 
 
@@ -237,7 +237,7 @@ class Read_Mat(Operator, ImportHelper):
         #                 
         print ('\n\nFinished creating array...\n')
         dumpfile=None
-        dumpfile=open(r'c:\tmp\dumpfile.txt', 'wt')
+        #dumpfile=open(r'c:\tmp\dumpfile.txt', 'wt')
         if dumpfile:
             for mat in raw_mats:
                 print (mat[0], file=dumpfile)
@@ -250,7 +250,7 @@ class Read_Mat(Operator, ImportHelper):
 ## At this point we need to call the material parser with raw_mats and get the parsed results back
 ##
         dumpfile=None
-        dumpfile=open(r'c:\tmp\dumpfile.mc6', 'wt')
+        #dumpfile=open(r'c:\tmp\dumpfile.mc6', 'wt')
         
         mats={}
         for raw_mat in raw_mats:
@@ -258,21 +258,22 @@ class Read_Mat(Operator, ImportHelper):
             if dumpfile:
                 mats[raw_mat[0]].write(depth=1, file=dumpfile)
         
-        dumpfile.close()
+        if dumpfile:
+            dumpfile.close()
         
         
         #########################################
         #  
         # Change / Create Mats for selected Object:
         #             
-                      
+        runtime=Runtime.Runtime(self.filepath)
         newmats=[]
         
         # mats is a dictionary
         # so this iterates keys (names)
         for mat in mats: 
             newmats.append( 
-                cbm4.createBlenderMaterialfromP4(mat, mats[mat], overwrite=self.overwrite)
+                cbm4.createBlenderMaterialfromP4(mat, mats[mat], runtime, overwrite=self.overwrite)
                 )
         
         if self.create_slots:
