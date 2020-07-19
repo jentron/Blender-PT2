@@ -54,7 +54,7 @@ def parseShaderTree(x, xs):
 
     return(tree)
 
-nodeParams = ['pos', 'advancedInputsCollapsed', 'showPreview', ]
+nodeParams = ['pos', 'advancedInputsCollapsed', 'showPreview', 'inputsCollapsed']
 ## found in compoundNodes
 nodeParams += ['gamma', 'compoundOutputsPos', 
                'compoundInputsPos', 'compoundShowPreview']

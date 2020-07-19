@@ -2,6 +2,10 @@
 ## newmat=cmt.createBlenderMaterialfromP4('Preview', mat['Preview'])
 
 import bpy
+import os
+from math import sqrt
+from bpy_extras.image_utils import load_image
+
 import RuntimeFolder as Runtime
 
 def getTexture( texturePath, runtime ):
@@ -13,37 +17,32 @@ def getTexture( texturePath, runtime ):
     
     file_location = runtime.find_texture_path(texturePath)
     try:
-        #print ('texturePath:', texturePath)
-        tempfile = open(texturePath, 'r')
+        tempfile = open(file_location, 'r')
         tempfile.close()
-        
+
         # Create texture
         # get texture name from image name
-        texture_name = os.path.basename(texturePath)
+        texture_name = os.path.basename(file_location)
         if len(texture_name) > 20:
             print ('short name', texture_name[:21])
             texture_name = texture_name[:21]
         # create texture
         try: # check if exists first
             tex1 = bpy.data.textures[texture_name]
-        except:
+        except KeyError:
             tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
-            DIR = os.path.dirname(texturePath)
-            newimage = load_image(texturePath, DIR)
+            DIR = os.path.dirname(file_location)
+            newimage = load_image(file_location, DIR)
 
             # Use new image
             tex1.image = newimage
-
-        # Add texture slot to material
-        mat1.diffuse_texture=tex1.image
-
-    except:
+    except FileNotFoundError:
         bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
-        print ('Texture Map not found: %s'%texturePath)
+        print ('Texture Map not found: %s'%file_location)
         tex1=None #fixme: this will cause the Texture setup to not happen
 
 
-    return(tex1)
+    return(tex1.image)
 
 
 def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
@@ -78,8 +77,8 @@ def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
     else:
         use_transparency=False     # set for transparent_texture or alpha value < 1.0
 
-    specular = ns_exponent/100     # or 0.5
-    roughness = 1 - reflect_factor # or 0.5
+    specular = sqrt(ns_exponent/100)  # or 0.5
+    roughness = reflect_factor # or 0.5
 
     if(overwrite is True) and ( name in bpy.data.materials ):
         blenderMat = bpy.data.materials[name]
