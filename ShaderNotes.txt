@@ -1,0 +1,23 @@
+Principled BSDF
+node_pbsdf.inputs['Alpha'].default_value = 
+node_pbsdf.inputs['Anisotropic'].default_value = 
+node_pbsdf.inputs['Anisotropic Rotation'].default_value = 
+node_pbsdf.inputs['Base Color'].default_value = 
+node_pbsdf.inputs['Clearcoat'].default_value = 
+node_pbsdf.inputs['Clearcoat Normal'].default_value = 
+node_pbsdf.inputs['Clearcoat Roughness'].default_value = 
+node_pbsdf.inputs['Emission'].default_value = 
+node_pbsdf.inputs['IOR'].default_value = 
+node_pbsdf.inputs['Metallic'].default_value = 
+node_pbsdf.inputs['Normal'].default_value = 
+node_pbsdf.inputs['Roughness'].default_value = 
+node_pbsdf.inputs['Sheen'].default_value = 
+node_pbsdf.inputs['Sheen Tint'].default_value = 
+node_pbsdf.inputs['Specular'].default_value = 
+node_pbsdf.inputs['Specular Tint'].default_value = 
+node_pbsdf.inputs['Subsurface'].default_value = 
+node_pbsdf.inputs['Subsurface Color'].default_value = 
+node_pbsdf.inputs['Subsurface Radius'].default_value = 
+node_pbsdf.inputs['Tangent'].default_value = 
+node_pbsdf.inputs['Transmission'].default_value = 
+node_pbsdf.inputs['Transmission Roughness'].default_value = 

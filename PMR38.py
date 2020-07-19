@@ -2,6 +2,7 @@
 # Simplified BSD License, see http://www.opensource.org/licenses/
 #-----------------------------------------------------------------------------
 # Copyright (c) 2011-2012, HEB Ventures, LLC
+# Copyright (c) 2020, Ronald Jensen
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without 
@@ -45,30 +46,38 @@
 
 ###################################################
 #
-#  Poser Mat Reader Version 11
+#  Poser Mat Reader Version 12
 #  1/8/2012
 #  www.blender3dclub.com
 #
 ###################################################
 
 ##########################################################
-# Check system
-#  
-
-
 
 import bpy
 import time
-import sys
 import os
-from bpy_extras import *
-from bpy_extras.image_utils import load_image
-from bpy.props import StringProperty, BoolProperty, EnumProperty
 
-print ('\n')
-print ('--- Starting Poser Mat Reader Version 2 ---')
-systemType = sys.platform
-print ('System Type:', systemType)
+# ImportHelper is a helper class, defines filename and
+# invoke() function which calls the file selector.
+from bpy_extras.io_utils import ImportHelper
+from bpy.props import StringProperty, BoolProperty, EnumProperty
+from bpy.types import Operator
+
+## Setup PT2/libs as a module path:
+import sys
+local_module_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),'libs')
+print(local_module_path)
+sys.path.append(local_module_path)
+
+import PT2_open as ptl
+import RuntimeFolder as Runtime
+import Material as matlib
+import shaderTrees as st
+import shaderTreeParser as stp
+import createBlenderMaterialfromP4 as cbm4
+
+print ('--- Starting Poser Mat Reader Version 3 ---')
 
 # ------------ Missing texture pup -----------------------
 class ErrorPup(bpy.types.Operator):
@@ -102,75 +111,14 @@ class MatPopper(bpy.types.Operator):
 
         return {'FINISHED'}
 
-
-    
-
-
 # -----------------------------------------------------------
 
-def find_file(poserfile, selffilepath):
-    poserfile = poserfile.strip('"')
-    print ('Poser File:', poserfile)
-    print ('SelfFilePath:', selffilepath)
-    if systemType == 'win32':
-        temp = selffilepath.split('\\')
-        temp2 = poserfile.lstrip(':').replace(':', '\\')
-        if temp2.startswith('runtime') is False and temp2.startswith('Runtime') is False:
-            if temp2.startswith('textures') is False and temp2.startswith('Textures') is False:
-                temp2 = 'textures\\' + temp2
-            temp2 = 'runtime\\' + temp2
-        print ('temp2:', temp2)            
-        comp_path = ''
-        #print ('temp=', temp)
-        complete = False
-        for temp3 in temp:
-            if temp3 == 'Runtime' or temp3 == 'runtime':
-                #comp_path = comp_path + temp3 + '\\'
-                comp_path = comp_path + temp2
-                complete = True
-            #if temp3 == 'Textures' or temp3 == 'textures':
-                #comp_path = comp_path + temp3 + '\\'
-            #    comp_path = comp_path + temp2
-            #    complete = True                
-                
-            else:
-                if complete == False:
-                    comp_path = comp_path + temp3 + '\\'
-        print ('comp_path:', comp_path) 
-        
-    if systemType == 'linux2':
-        temp = selffilepath.split('/')
-        temp2 = poserfile.lstrip(':').replace(':', '/')
-        if temp2.startswith('runtime') is False and temp2.startswith('Runtime') is False:
-            if temp2.startswith('textures') is False and temp2.startswith('Textures') is False:
-                temp2 = 'textures/' + temp2
-            temp2 = 'runtime/' + temp2
-        print ('temp2:', temp2)            
-        comp_path = ''
-        #print ('temp=', temp)
-        complete = False
-        for temp3 in temp:
-            if temp3 == 'Runtime' or temp3 == 'runtime':
-                #comp_path = comp_path + temp3 + '\\'
-                comp_path = comp_path + temp2
-                complete = True
-            #if temp3 == 'Textures' or temp3 == 'textures':
-                #comp_path = comp_path + temp3 + '\\'
-            #    comp_path = comp_path + temp2
-            #    complete = True                
-                
-            else:
-                if complete == False:
-                    comp_path = comp_path + temp3 + '/'
-        print ('comp_path:', comp_path)            
-                   
-         
-    file_location = comp_path
-    return(file_location)
-
+# def find_file(poser_file, self_file_path):
+#     rt=Runtime(self_file_path)
+#     file_location = rt.find_texture_path(poser_file)
+#     return(file_location)
 # -----------------------------------------------------------
-       
-    
+
 
 class Save_Mat(bpy.types.Operator):
     '''Save Poser material file for this object'''
@@ -200,16 +148,34 @@ class Save_Mat(bpy.types.Operator):
 
         return {'FINISHED'}  
     
-class Read_Mat(bpy.types.Operator):
+class Read_Mat(Operator, ImportHelper):
     '''Read Poser material file for this object'''
     bl_idname = "read.mat"  
     bl_label = "Read Mat File"
     filename_ext = ".pp2"
     #filter_glob = StringProperty(default="*.pp2", options={'HIDDEN'})    
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
-    
+    overwrite: BoolProperty(
+        name="Overwrite Materials",
+        description="Overwrite current materials with the same name",
+        default=True,
+    )
 
-    
+    create_slots: BoolProperty(
+        name="Add Material Slots",
+        description="Add missing materials slots to the current object",
+        default=True,
+    )
+
+    shader_type: EnumProperty(
+        name="Import Mode",
+        description="Use P4 Materials or Shader Tree Materials",
+        items=(
+            ('OPT_P4', "P4 Materials", "Simple Principled BDSF"),
+            ('OPT_ST', "Shader Tree", "Translate Shader Tree to Blender"),
+        ),
+        default='OPT_P4',
+    )
     
     @classmethod
     def poll(cls, context):
@@ -223,463 +189,109 @@ class Read_Mat(bpy.types.Operator):
         # Read Mat File
         # 
         
-        file = open(self.filepath, 'r')
+        file = ptl.PT2_open(self.filepath, 'rt')
         lines = []
         for x in file:
             lines.append(x.strip())
         file.close() 
 
-        mats = []         
-        mat = ''
-        comps = []
+        raw_mats = [] # an array of the unparsed materials
+        mat_name = ''
+        comps = []    # a list of the unparsed lines
         readcomps = False
+        depth = 0
         
         for line in lines:
-            line = line.strip()
             #print (line)
             skip = 0
             if line.startswith('material') is True:
                 #print ('Mat:', line.replace('material', ''))
-                mat = line.replace('material', '').strip()
+                mat_name = line.replace('material', '').strip()
                 readcomps = True # Turn on component reader
-                print ('Mat Name:', mat)
+                print ('Mat Name:', mat_name)
                 skip = 1
                 
-            elif line.startswith('{') is True:
-                skip = 1
+            elif line.startswith('{') is True and readcomps is True:
+                depth += 1
+                #skip = 1
                
                 
-            elif line.startswith('}') is True and readcomps == True:
-                readcomps = False
-                mats.append([mat, comps])
-                mat = ''
-                comps = []
+            elif line.startswith('}') is True and depth > 0:
+                depth -= 1
+                #skip = 1
                 
             if readcomps == True and skip != 1:
-                comps.append(line.split())                
+                #print(depth, line)
+                comps.append([depth, line.split()]) 
                
+            if depth == 0 and readcomps is True and len(comps) > 0:
+                readcomps=False
+                raw_mats.append([mat_name, comps])
+                mat_name = ''
+                comps = []
+                
 
         #########################################
         #  
         # Displays Mat Array
         #                 
         print ('\n\nFinished creating array...\n')
-        #for mat in mats:
-        #    print (mat[0])                
-        #    for comp in mat[1]:
-        #        print (comp)
-        #    print ('\n')
+        dumpfile=None
+        #dumpfile=open(r'c:\tmp\dumpfile.txt', 'wt')
+        if dumpfile:
+            for mat in raw_mats:
+                print (mat[0], file=dumpfile)
+                for comp in mat[1]:
+                    print (comp, file=dumpfile)
+                print ('\n', file=dumpfile)
+            dumpfile.close()
 
+##
+## At this point we need to call the material parser with raw_mats and get the parsed results back
+##
+        dumpfile=None
+        #dumpfile=open(r'c:\tmp\dumpfile.mc6', 'wt')
+        
+        mats={}
+        for raw_mat in raw_mats:
+            mats[raw_mat[0]] = stp.parseMaterial( iter(raw_mat[1]), raw_mat[0] )
+            if dumpfile:
+                mats[raw_mat[0]].write(depth=1, file=dumpfile)
+        
+        if dumpfile:
+            dumpfile.close()
+        
+        
         #########################################
         #  
         # Change / Create Mats for selected Object:
         #             
-                      
-        obj = bpy.context.active_object
+        runtime=Runtime.Runtime(self.filepath)
+        newmats=[]
         
-        #########################################
-        #  
-        # Check if Mat exists, if not - create
-        # 
-        #        
-        print ('Checking Materials:')
-        BMats = bpy.data.materials
-        OBJMats = obj.data.materials
-        add_list = []
-        mat_check = False
-        print ('Mats in file:')
-        print ('-----------------------------------------\n')        
-        for mat in mats:
-            print (mat[0])
-        print ('-----------------------------------------\n')
+        # mats is a dictionary
+        # so this iterates keys (names)
+        for mat in mats: 
+            newmats.append( 
+                cbm4.createBlenderMaterialfromP4(mat, mats[mat], runtime, overwrite=self.overwrite)
+                )
         
-        
+        if self.create_slots:
+            obj = bpy.context.active_object
 
-        for mat in mats:
-            if BMats.__contains__(mat[0]) is False:
-                bpy.data.materials.new(mat[0])
-                print ('Adding:', mat[0])
-   
-           
-            
-                                    
-                    
-        #  Check if Slotted:
-        #print (len(obj.material_slots))
-        
-        if len(obj.material_slots) > 0:
-            for matslot in obj.material_slots:
-                for mat in mats:
-                    if mat[0] == matslot.name:
-                        skip = True
-                    else:
-                        passthisone = True
-                        #OBJMats.append(BMats[mat[0]])
-                        #print ('Need to add slot for ', mat[0])
+            objmats = obj.data.materials
+            for mat in newmats:
+                if mat.name in objmats:
+                    pass
+                else:
+                    objmats.append(mat)
+                    print ('Adding:', mat.name)
 
-        else: #Add All:                        
-            for mat in mats:
-                print ('adding all mats...')
-                OBJMats.append(BMats[mat[0]])
-                
-                
-        
-
-        for matslot in obj.material_slots:
-            #print ('\n')
-            #print (matslot.name)
-            #print (bpy.data.materials[matslot.name].diffuse_color)       
-            for mat in mats:
-                # Does not create new mats - only change existing.
-                if mat[0] == matslot.name:
-                    material = bpy.data.materials[matslot.name]
-                    
-                    #Default settings for all Materials
-                    material.specular_alpha = 0 # Turn off alpha spec
-                    print ('\n-----------------------------------------------------------------')
-                    print ('matname:', mat[0])
-                    for comp in mat[1]:
-                        
-                        # Create unique texture names
-                        texName = mat[0] + '_' + 'tex'
-                        bumName = mat[0] + '_' + 'bum'
-                        traName = mat[0] + '_' + 'tra'                        
-                        
-
-                        if comp[0] == 'KdColor':
-                            print (comp)
-                            color = []
-                            color.append(float(comp[1]))
-                            color.append(float(comp[2]))
-                            color.append(float(comp[3]))
-                            #print(color)
-                            material.diffuse_color = color
-                            color = []
-                            
-                        elif comp[0] == 'KsColor':
-                            print (comp)
-                            color = []
-                            color.append(float(comp[1]))
-                            color.append(float(comp[2]))
-                            color.append(float(comp[3]))
-                            #print(color)
-                            material.specular_color = color
-                            color = []   
-                            
-                        elif comp[0] == 'tMax': # Transparency Value
-                            print (comp)
-                            transparency = 1 - float(comp[1])
-                            material.use_transparency = True
-                            material.alpha = transparency
-                                                     
-
-                        ################################################
-                        #
-                        #  Texture Map
-                        #
-                        
-                        elif comp[0] == 'textureMap' and comp[1] != 'NO_MAP':
-                            print ('texture:', comp[1])
-                            # Need to clear/replace any existing texture that uses color
-                            slots = material.texture_slots
-                            for x in range(0, len(slots)):
-                                try:
-                                    if slots[x].use_map_color_diffuse == True:
-                                        material.texture_slots.clear(x)
-                                        
-                                except:
-                                    pass
-                                
-                            
-                            
-                            # Check if image already loaded
-                            temp = comp[1].split(':')
-                            complen = len(comp[1].split(':'))-1
-                            temp = temp[complen]
-                            temp = temp.strip('"')
-                            #print ('Image: ', temp)
-                            imgs = bpy.data.images
-                            already_loaded = False
-
-                            for img in imgs:
-                                if temp == img.name:
-                                    already_loaded = True
-                                    # May need to add check box to reload / overwrite images
-
-                            if already_loaded == False:
-                                #print ('Loading texture: ')
-                                image_path = find_file(comp[1], self.filepath)
-                                DIR = os.path.dirname(image_path)
-                                newimage = load_image(image_path, DIR)
-                                #print ('image path:', image_path)
-
-                                already_loaded = True
-
-                            if already_loaded == True:
-                                #Check if texture already exists:
-                                texture_exists = False
-                                texs = bpy.data.textures
-                                for tex in texs:
-                                    if tex != None:
-                                        if tex.name == texName:# Texture Exists
-                                            tex.type = 'IMAGE'
-                                            tex.image = bpy.data.images[temp]
-                                            texture_exists = True
-                                            
-                                if texture_exists == False: # Creating Texture
-                                    #print ('Creating Texture')
-                                    tex = bpy.data.textures.new(name = texName, type = 'IMAGE')
-                                    tex.image = bpy.data.images[temp]
-                                    
-                                    
-
-                                # Check if slotted, if not add texture slot
-                                # Add texture slot to material
-                                tex = bpy.data.textures[texName]                               
-                                if material.texture_slots.__contains__(texName): #slot exists
-                                    ts = material.texture_slots[texName]
-                                    ts.use_map_color_diffuse = True   
-                                    ts.use_map_normal = False
-                                    ts.texture_coords = 'UV'  
-                                    ts.use = True
-                                        
-                                else: # Adding texture slot
-                                    ts = material.texture_slots.add()            
-                                    ts.texture = tex
-                                    ts.texture_coords = 'UV'
-                                    ts.use_map_color_diffuse = True              
-                                    ts.use_map_normal = False                                        
-                                    ts.use = True
-                                    #print ('adding texture slot')
-
-                                        
-                        elif comp[0] == 'textureMap' and comp[1] == 'NO_MAP':  
-                            # Remove texture from slots
-                            if material.texture_slots.__contains__(texName):
-                                for x in range(0, len(material.texture_slots)):
-                                    ms = material.texture_slots[x]
-                                    #print (ms)
-                                    if ms != None:
-                                        if ms.name == texName:
-                                            material.texture_slots.clear(x)
-                                            
-                            # Need to clear/replace any existing texture that uses color
-                            slots = material.texture_slots
-                            for x in range(0, len(slots)):
-                                try:
-                                    if slots[x].use_map_color_diffuse == True:
-                                        material.texture_slots.clear(x)
-                                        
-                                except:
-                                    pass                                            
-                                            
-                                            
-                        ################################################
-                        #
-                        #  Bump Map
-                        #                                            
-
-                        #elif comp[0] == 'Nothing':
-                        elif comp[0] == 'bumpMap' and comp[1] != 'NO_MAP':
-                            
-                            # Bump image names end with .bum instead of .jpg?
-                            #temp = comp[1]
-                            if comp[1].endswith('.bum"'):
-                                comp[1] = comp[1].replace('.bum', '.jpg')   
-                            #print ('comp1:', comp[1])                            
-                            
-                            # Check if image already loaded
-                            temp = comp[1]
-                            temp = temp.split(':')
-                            complen = len(temp)-1
-                            temp = temp[complen]
-                            temp = temp.strip('"')
-                            #print ('Image: ', temp)
-                            imgs = bpy.data.images
-                            already_loaded = False
-
-                            for img in imgs:
-                                if temp == img.name:
-                                    already_loaded = True
-                                    # May need to add check box to reload / overwrite images
-
-                            if already_loaded == False:
-                                #print ('Loading texture: ')
-                                #print ('comp[1]:', comp[1])
-                                #print ('self.filepath:', self.filepath)                                
-                                image_path = find_file(comp[1], self.filepath)
-                                
-                                DIR = os.path.dirname(image_path)
-                                newimage = load_image(image_path, DIR)
-                                #print ('image path:', image_path)
-                                already_loaded = True
-
-                            if already_loaded == True:
-                                #print ('line 342:')
-                                #Check if texture already exists:
-                                texture_exists = False
-                                texs = bpy.data.textures
-                                for tex in texs:
-                                    if tex != None:
-                                        if tex.name == bumName:# Texture Exists
-                                            tex.type = 'IMAGE'
-                                            tex.image = bpy.data.images[temp]
-                                            texture_exists = True
-                                            
-                                if texture_exists == False: # Creating Texture
-                                    tex = bpy.data.textures.new(name = bumName, type = 'IMAGE')
-                                    tex.image = bpy.data.images[temp]
-                                    
-                                # Check if slotted, if not add texture slot
-                                # Add texture slot to material
-                                tex = bpy.data.textures[bumName]
-                                #print ('line360 tex.name:', tex.name)
-                                if material.texture_slots.__contains__(bumName): #slot exists
-                                    ts = material.texture_slots[bumName]
-                                    ts.use_map_color_diffuse = False   
-                                    ts.use_map_normal = True
-                                    ts.normal_factor = .01
-                                    ts.texture_coords = 'UV'  
-                                    ts.use = True
-
-                                else: # Adding texture slot
-                                    ts = material.texture_slots.add()            
-                                    ts.texture = tex
-                                    ts.texture_coords = 'UV'
-                                    ts.use_map_color_diffuse = False         
-                                    ts.use_map_normal = True
-                                    ts.normal_factor = .01                                        
-                                    ts.use = True
-                                    #print ('adding texture slot')
-                                        
-                        elif comp[0] == 'bumpMap' and comp[1] == 'NO_MAP':  
-                            # Remove texture from slots
-                            if material.texture_slots.__contains__(bumName):
-                                for x in range(0, len(material.texture_slots)):
-                                    ms = material.texture_slots[x]
-                                    #print (ms)
-                                    if ms != None:
-                                        if ms.name == bumName:
-                                            material.texture_slots.clear(x)
-                            
-                            
-                            
-                        ################################################
-                        #
-                        #  Transparency Map
-                        #
-                        
-                        elif comp[0] == 'transparencyMap' and comp[1] != 'NO_MAP':
-                            
-                            # Need to clear/replace any existing texture that uses color
-                            print ('Transparency:', comp[1])
-                            slots = material.texture_slots
-                            for x in range(0, len(slots)):
-                                try:
-                                    if slots[x].use_map_alpha == True:
-                                        material.texture_slots.clear(x)
-                                        
-                                except:
-                                    pass
-                                
-                            
-                            
-                            # Check if image already loaded
-                            temp = comp[1].split(':')
-                            complen = len(comp[1].split(':'))-1
-                            temp = temp[complen]
-                            temp = temp.strip('"')
-                            #print ('Image: ', temp)
-                            imgs = bpy.data.images
-                            already_loaded = False
-
-                            for img in imgs:
-                                if temp == img.name:
-                                    already_loaded = True
-                                    # May need to add check box to reload / overwrite images
-
-                            if already_loaded == False:
-                                #print ('Loading texture: ')
-                                image_path = find_file(comp[1], self.filepath)
-                                DIR = os.path.dirname(image_path)
-                                newimage = load_image(image_path, DIR)
-                                #print ('image path:', image_path)
-
-                                already_loaded = True
-
-                            if already_loaded == True:
-                                #Check if texture already exists:
-                                texture_exists = False
-                                texs = bpy.data.textures
-                                for tex in texs:
-                                    if tex != None:
-                                        if tex.name == traName:# Texture Exists
-                                            tex.type = 'IMAGE'
-                                            tex.image = bpy.data.images[temp]
-                                            tex.use_alpha = False
-                                            texture_exists = True
-                                            
-                                if texture_exists == False: # Creating Texture
-                                    #print ('Creating Texture')
-                                    tex = bpy.data.textures.new(name = traName, type = 'IMAGE')
-                                    tex.image = bpy.data.images[temp]
-                                    tex.use_alpha = False
-                                    
-                                    
-
-                                # Check if slotted, if not add texture slot
-                                # Add texture slot to material
-                                tex = bpy.data.textures[traName]                               
-                                if material.texture_slots.__contains__(traName): #slot exists
-                                    ts = material.texture_slots[traName]
-                                    ts.use_map_color_diffuse = False   
-                                    ts.use_map_alpha = True
-                                    #ts.normal_factor = .01
-                                    ts.texture_coords = 'UV'  
-                                    ts.use = True
-                                        
-                                else: # Adding texture slot
-                                    ts = material.texture_slots.add()            
-                                    ts.texture = tex
-                                    ts.texture_coords = 'UV'
-                                    ts.use_map_color_diffuse = False         
-                                    ts.use_map_alpha = True
-                                    #ts.normal_factor = .01                                        
-                                    ts.use = True
-                                    #print ('adding texture slot')
-
-                                        
-                        elif comp[0] == 'transparencyMap' and comp[1] == 'NO_MAP':  
-                            # Remove texture from slots
-                            #print ('Removing Tra-Map from slot:', traName)
-                            if material.texture_slots.__contains__(traName):
-                                for x in range(0, len(material.texture_slots)):
-                                    ms = material.texture_slots[x]
-                                    #print (ms)
-                                    if ms != None:
-                                        if ms.name == traName:
-                                            material.texture_slots.clear(x)
-                                            
-                            # Need to clear/replace any existing texture that uses alpha
-                            slots = material.texture_slots
-                            for x in range(0, len(slots)):
-                                try:
-                                    if slots[x].use_map_color_alpha == True:
-                                        material.texture_slots.clear(x)
-                                        
-                                except:
-                                    pass                              
-                            
-                        elif comp[0] == 'reflectionMap':
-                            #print (comp[1])             
-                            pass_this_step = True
-                
-
-        return {'FINISHED'}     
+        return {'FINISHED'}
     
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}    
+        return {'RUNNING_MODAL'}
     
         
 class PT2_PT_Mat_Reader(bpy.types.Panel):
@@ -705,12 +317,11 @@ class PT2_PT_Mat_Reader(bpy.types.Panel):
            row.label(text='No object Selected')
         row = layout.row()       
         #row.label(text=bpy.PoserTexturePath)             
-        #row.operator("save.mat", icon = "DISK_DRIVE", text = 'Save Mat File')
-	
+        row.operator("save.mat", icon = "DISK_DRIVE", text = 'Save Mat File')
         row.operator("read.mat", icon = "DISK_DRIVE", text = 'Read Mat File')   
         row = layout.row()                     
         
-	#row.operator("mat.popper", text = 'Mat Popper')
+        #row.operator("mat.popper", text = 'Mat Popper')
         #row.operator("import.poser_cr2", icon = "ARMATURE", text = 'Import Character')
         
 
