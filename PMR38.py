@@ -57,9 +57,12 @@
 import bpy
 import time
 import os
-from bpy_extras import *
-from bpy_extras.image_utils import load_image
+
+# ImportHelper is a helper class, defines filename and
+# invoke() function which calls the file selector.
+from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
+from bpy.types import Operator
 
 ## Setup PT2/libs as a module path:
 import sys
@@ -74,7 +77,6 @@ import shaderTrees as st
 import shaderTreeParser as stp
 import createBlenderMaterialfromP4 as cbm4
 
-print ('\n')
 print ('--- Starting Poser Mat Reader Version 3 ---')
 
 # ------------ Missing texture pup -----------------------
@@ -146,14 +148,35 @@ class Save_Mat(bpy.types.Operator):
 
         return {'FINISHED'}  
     
-class Read_Mat(bpy.types.Operator):
+class Read_Mat(Operator, ImportHelper):
     '''Read Poser material file for this object'''
     bl_idname = "read.mat"  
     bl_label = "Read Mat File"
     filename_ext = ".pp2"
     #filter_glob = StringProperty(default="*.pp2", options={'HIDDEN'})    
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
+    overwrite: BoolProperty(
+        name="Overwrite Materials",
+        description="Overwrite current materials with the same name",
+        default=True,
+    )
 
+    create_slots: BoolProperty(
+        name="Add Material Slots",
+        description="Add missing materials slots to the current object",
+        default=True,
+    )
+
+    shader_type: EnumProperty(
+        name="Import Mode",
+        description="Use P4 Materials or Shader Tree Materials",
+        items=(
+            ('OPT_P4', "P4 Materials", "Simple Principled BDSF"),
+            ('OPT_ST', "Shader Tree", "Translate Shader Tree to Blender"),
+        ),
+        default='OPT_P4',
+    )
+    
     @classmethod
     def poll(cls, context):
         return context.active_object != None
@@ -249,22 +272,25 @@ class Read_Mat(bpy.types.Operator):
         # so this iterates keys (names)
         for mat in mats: 
             newmats.append( 
-                cbm4.createBlenderMaterialfromP4(mat, mats[mat], overwrite=True)
+                cbm4.createBlenderMaterialfromP4(mat, mats[mat], overwrite=self.overwrite)
                 )
-        obj = bpy.context.active_object
+        
+        if self.create_slots:
+            obj = bpy.context.active_object
 
-        objmats = obj.data.materials
-        for mat in newmats:
-            if mat.name in objmats:
-                pass
-            else:
-                objmats.append(mat)
-                print ('Adding:', mat.name)
-        return {'FINISHED'}     
+            objmats = obj.data.materials
+            for mat in newmats:
+                if mat.name in objmats:
+                    pass
+                else:
+                    objmats.append(mat)
+                    print ('Adding:', mat.name)
+
+        return {'FINISHED'}
     
     def invoke(self, context, event):
         context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}    
+        return {'RUNNING_MODAL'}
     
         
 class PT2_PT_Mat_Reader(bpy.types.Panel):
