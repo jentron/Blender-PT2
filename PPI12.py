@@ -369,279 +369,285 @@ class LoadPoserProp(bpy.types.Operator):
             print ('==================================================')
             print ('=        Gathering data from prop array          =')
             print ('==================================================')
-            for x in PropArray:
-
-                skip = 0
-                temparray2 = []
-                #print (x)
-                if x.startswith('prop ') is True:
-                    prop_name = re.sub(r'^prop[\t ]+', '', x)
-                    print("Prop name: ", prop_name)
-                    rotationtemp[0] = prop_name
-                    scaletemp[0] = prop_name
-                    #bpy.context.object.name=(name)
-
-                elif x.startswith('v ') is True:
+# start of parser loop
+            iPropArray = iter(PropArray)
+            try:
+                while True:
+                    x =next(iPropArray)
+                    skip = 0
+                    temparray2 = []
                     #print (x)
-                    tempvert = re.sub(r'^v[\t ]+', '', x)
-                    temp_array = [float(s) for s in tempvert.split()]
-                    # array = Vector(temp_array) @ mtrx_swap
-                    array = [temp_array[0], -temp_array[2], temp_array[1]]  #hardcode Y Z swap
-                    verts.append(array)
-
-                elif x.startswith('usemtl ') is True:
-                    current_mat = x.split(' ')[1]
-                    #current_mat = current_mat.strip()
-                    #
-                    #  dupli mat name fix:
-                    #
-                    current_mat = str(mat_counter) + ' ' + current_mat
-
-                elif x.startswith('g\t') is True:
-                    tempstr = re.sub(r'^g[\t ]+', '', x)
-                    tempstr = tempstr.replace('\t', ' ')
-                    face_to_group = tempstr
-
-                elif x.startswith('f ') is True:
-                    tempstr1 = current_mat
-                    tempstr2 = re.sub(r'^f[\t ]+', '', x)
-                    facearray.append([tempstr1, tempstr2])
-
-                elif x.startswith('vt ') is True:
-                    tempstr = re.sub(r'^vt[\t ]+', '', x)
-                    #print (tempstr)
-                    temparray1 = [float(s) for s in tempstr.split()]
-                    temparray2.append(temparray1[0])
-                    temparray2.append(temparray1[1])
-                    UVvertices.append(temparray2)
-            ##########################################################
-            #  Morph Targets.
-            #
-                elif x.startswith('targetGeom ') is True:
-                    morph.name = re.sub(r'^targetGeom[\t ]+', '', x)
-                    morphloop = depth
-                    morph.group = prop_name
-                    # print ("Morph:", morph.name )
-                elif x.startswith('k ') is True and depth >= morphloop:
-                     morph.value = float(x.split()[2])
-                elif x.startswith('min ') is True and depth >= morphloop:
-                     morph.min = float(x.split()[1])
-                elif x.startswith('max ') is True and depth >= morphloop:
-                     morph.max = float(x.split()[1])
-                elif x.startswith('d ') is True and depth >= morphloop:
-                    # print('d', x)
-                    tempmorph = re.sub(r'^d[\t ]+', '', x)
-                    i, dx, dy, dz = [float(s) for s in tempmorph.split()]
-                    morph.deltas.append( { int(i) : Vector( (dx, dy, dz) ) } )
-                elif x.startswith('indexes ') is True and depth >= morphloop:
-                     morph.indexes = float(x.split()[1])
-                elif x.startswith('numbDeltas ') is True and depth >= morphloop:
-                     morph.numbDeltas = float(x.split()[1])
-                elif x.startswith ('{'):
-                    depth += 1
-                    # print('Depth++: ', depth, morphloop, matloop)
-                elif x.startswith ('}'):
-                    depth -= 1
-                    if morphloop >= depth:
-                        morphloop = -1
-                        morphs.append(morph)
-                        morph = Morph()
-                    if matloop >= depth:
-                        matloop = -1
-                        mats.append(mat)
-                        mat = []
-                    # print('Depth--: ', depth,  morphloop, matloop)
-
-            ##########################################################
-            #  Check for parent.
-            #
-                elif x.startswith('smartparent') is True:
-                    parent_object = x.split()[1]
-                    child_parent.append([prop_name, parent_object])
-                    print ('parent to:', parent_object)
-
-            ##########################################################
-            #  Origin
-            #
-                elif x.startswith('origin ') is True:
-                     tempstring = re.sub(r'^origin[\t ]+', '', x)
-                     tempstring = tempstring.split()
-                     print ('tempstring:', tempstring)
-                     obj_origin = (float(tempstring[0]), -float(tempstring[2]), float(tempstring[1])) #hardcode Y Z swap
-                     # obj_origin = Vector( (float(tempstring[0]), float(tempstring[1]), float(tempstring[2])) ) @ mtrx_swap
-                     print ('Origin:', obj_origin)
-                     origin_list.append([prop_name, obj_origin])
+                    if x.startswith('prop ') is True:
+                        prop_name = re.sub(r'^prop[\t ]+', '', x)
+                        print("Prop name: ", prop_name)
+                        rotationtemp[0] = prop_name
+                        scaletemp[0] = prop_name
+                        #bpy.context.object.name=(name)
 
 
+                    elif x.startswith('v ') is True:
+                        #print (x)
+                        tempvert = re.sub(r'^v[\t ]+', '', x)
+                        temp_array = [float(s) for s in tempvert.split()]
+                        # array = Vector(temp_array) @ mtrx_swap
+                        array = [temp_array[0], -temp_array[2], temp_array[1]]  #hardcode Y Z swap
+                        verts.append(array)
 
-            ##########################################################
-            #  Rotation factor
-            #
+                    elif x.startswith('usemtl ') is True:
+                        current_mat = x.split(' ')[1]
+                        #current_mat = current_mat.strip()
+                        #
+                        #  dupli mat name fix:
+                        #
+                        current_mat = str(mat_counter) + ' ' + current_mat
 
-                elif x.startswith('rotateX ') is True:
-                     xrotatecheck = True
-                elif x.startswith('k ') is True and xrotatecheck == True:
-                     xrotatecheck = False
-                     xrotate = float(x.split()[2])
-                     rotationtemp[1] = xrotate
-                elif x.startswith('rotateZ ') is True: #hardcode Y Z swap
-                     yrotatecheck = True
-                elif x.startswith('k ') is True and yrotatecheck == True:
-                     yrotatecheck = False
-                     yrotate = float(x.split()[2])
-                     rotationtemp[2] = yrotate
-                elif x.startswith('rotateY ') is True: #hardcode Y Z swap
-                     zrotatecheck = True
-                elif x.startswith('k ') is True and zrotatecheck == True:
-                     zrotatecheck = False
-                     zrotate = float(x.split()[2])
-                     rotationtemp[3] = zrotate
+                    elif x.startswith('g\t') is True:
+                        tempstr = re.sub(r'^g[\t ]+', '', x)
+                        tempstr = tempstr.replace('\t', ' ')
+                        face_to_group = tempstr
 
+                    elif x.startswith('f ') is True:
+                        tempstr1 = current_mat
+                        tempstr2 = re.sub(r'^f[\t ]+', '', x)
+                        facearray.append([tempstr1, tempstr2])
 
-            ##########################################################
-            #  Scale factor
-            #
+                    elif x.startswith('vt ') is True:
+                        tempstr = re.sub(r'^vt[\t ]+', '', x)
+                        #print (tempstr)
+                        temparray1 = [float(s) for s in tempstr.split()]
+                        temparray2.append(temparray1[0])
+                        temparray2.append(temparray1[1])
+                        UVvertices.append(temparray2)
+                ##########################################################
+                #  Morph Targets.
+                #
+                    elif x.startswith('targetGeom ') is True:
+                        morph.name = re.sub(r'^targetGeom[\t ]+', '', x)
+                        morphloop = depth
+                        morph.group = prop_name
+                        # print ("Morph:", morph.name )
+                    elif x.startswith('k ') is True and depth >= morphloop:
+                        morph.value = float(x.split()[2])
+                    elif x.startswith('min ') is True and depth >= morphloop:
+                        morph.min = float(x.split()[1])
+                    elif x.startswith('max ') is True and depth >= morphloop:
+                        morph.max = float(x.split()[1])
+                    elif x.startswith('d ') is True and depth >= morphloop:
+                        # print('d', x)
+                        tempmorph = re.sub(r'^d[\t ]+', '', x)
+                        i, dx, dy, dz = [float(s) for s in tempmorph.split()]
+                        morph.deltas.append( { int(i) : Vector( (dx, dy, dz) ) } )
+                    elif x.startswith('indexes ') is True and depth >= morphloop:
+                        morph.indexes = float(x.split()[1])
+                    elif x.startswith('numbDeltas ') is True and depth >= morphloop:
+                        morph.numbDeltas = float(x.split()[1])
+                    elif x.startswith ('{'):
+                        depth += 1
+                        # print('Depth++: ', depth, morphloop, matloop)
+                    elif x.startswith ('}'):
+                        depth -= 1
+                        if morphloop >= depth:
+                            morphloop = -1
+                            morphs.append(morph)
+                            morph = Morph()
+                        if matloop >= depth:
+                            matloop = -1
+                            mats.append(mat)
+                            mat = []
+                        # print('Depth--: ', depth,  morphloop, matloop)
 
-                elif x.startswith('propagatingScaleX ') is True:
-                     xscalecheck = True
-                elif x.startswith('k ') is True and xscalecheck == True:
-                     xscalecheck = False
-                     xscaleamount = float(x.split()[2])
-                     scaletemp[1] = xscaleamount
-                elif x.startswith('propagatingScaleZ ') is True: #hardcode Y Z swap
-                     yscalecheck = True
-                elif x.startswith('k ') is True and yscalecheck == True:
-                     yscalecheck = False
-                     yscaleamount = float(x.split()[2])
-                     scaletemp[2] = yscaleamount
-                elif x.startswith('propagatingScaleY ') is True: #hardcode Y Z swap
-                     zscalecheck = True
-                elif x.startswith('k ') is True and zscalecheck == True:
-                     zscalecheck = False
-                     zscaleamount = float(x.split()[2])
-                     scaletemp[3] = zscaleamount
+                ##########################################################
+                #  Check for parent.
+                #
+                    elif x.startswith('smartparent') is True:
+                        parent_object = x.split()[1]
+                        child_parent.append([prop_name, parent_object])
+                        print ('parent to:', parent_object)
+
+                ##########################################################
+                #  Origin
+                #
+                    elif x.startswith('origin ') is True:
+                        tempstring = re.sub(r'^origin[\t ]+', '', x)
+                        tempstring = tempstring.split()
+                        print ('tempstring:', tempstring)
+                        obj_origin = (float(tempstring[0]), -float(tempstring[2]), float(tempstring[1])) #hardcode Y Z swap
+                        # obj_origin = Vector( (float(tempstring[0]), float(tempstring[1]), float(tempstring[2])) ) @ mtrx_swap
+                        print ('Origin:', obj_origin)
+                        origin_list.append([prop_name, obj_origin])
 
 
 
+                ##########################################################
+                #  Rotation factor
+                #
 
-            ##########################################################
-            #  Location Translations from parents' origin
-            #
+                    elif x.startswith('rotateX ') is True:
+                        xrotatecheck = True
+                    elif x.startswith('k ') is True and xrotatecheck == True:
+                        xrotatecheck = False
+                        xrotate = float(x.split()[2])
+                        rotationtemp[1] = xrotate
+                    elif x.startswith('rotateZ ') is True: #hardcode Y Z swap
+                        yrotatecheck = True
+                    elif x.startswith('k ') is True and yrotatecheck == True:
+                        yrotatecheck = False
+                        yrotate = float(x.split()[2])
+                        rotationtemp[2] = yrotate
+                    elif x.startswith('rotateY ') is True: #hardcode Y Z swap
+                        zrotatecheck = True
+                    elif x.startswith('k ') is True and zrotatecheck == True:
+                        zrotatecheck = False
+                        zrotate = float(x.split()[2])
+                        rotationtemp[3] = zrotate
 
-                elif x.startswith('translateZ ') is True: #hardcode Y Z swap
-                     ytranscheck = True
-                elif x.startswith('k ') is True and ytranscheck == True:
-                     ytranscheck = False
-                     ytransamount = -float(x.split()[2])
-                elif x.startswith('translateY ') is True: #hardcode Y Z swap
-                     ztranscheck = True
-                elif x.startswith('k ') is True and ztranscheck == True:
-                     ztranscheck = False
-                     ztransamount = float(x.split()[2])
-                elif x.startswith('translateX ') is True:
-                     xtranscheck = True
-                elif x.startswith('k ') is True and xtranscheck == True:
-                     xtranscheck = False
-                     xtransamount = float(x.split()[2])
 
-            ##########################################################
-            #  mesh offsetB
-            #
+                ##########################################################
+                #  Scale factor
+                #
 
-                elif x.startswith('xOffsetB ') is True:
-                     xoffsetb = True
-                     #print (x)
-                elif x.startswith('initValue ') is True and xoffsetb == True:
-                     xoffsetb = False
-                     print (x)
-                     xoffsetbamount = float(x.split()[1])
-                elif x.startswith('zOffsetB ') is True: #hardcode Y Z swap
-                     yoffsetb = True
-                     #print (x)
-                elif x.startswith('initValue ') is True and yoffsetb == True:
-                     yoffsetb = False
-                     print (x)
-                     yoffsetbamount = -float(x.split()[1])
-                elif x.startswith('yOffsetB ') is True: #hardcode Y Z swap
-                     zoffsetb = True
-                     #print (x)
-                elif x.startswith('initValue ') is True and zoffsetb == True:
-                     zoffsetb = False
-                     print (x)
-                     zoffsetbamount = float(x.split()[1])
+                    elif x.startswith('propagatingScaleX ') is True:
+                        xscalecheck = True
+                    elif x.startswith('k ') is True and xscalecheck == True:
+                        xscalecheck = False
+                        xscaleamount = float(x.split()[2])
+                        scaletemp[1] = xscaleamount
+                    elif x.startswith('propagatingScaleZ ') is True: #hardcode Y Z swap
+                        yscalecheck = True
+                    elif x.startswith('k ') is True and yscalecheck == True:
+                        yscalecheck = False
+                        yscaleamount = float(x.split()[2])
+                        scaletemp[2] = yscaleamount
+                    elif x.startswith('propagatingScaleY ') is True: #hardcode Y Z swap
+                        zscalecheck = True
+                    elif x.startswith('k ') is True and zscalecheck == True:
+                        zscalecheck = False
+                        zscaleamount = float(x.split()[2])
+                        scaletemp[3] = zscaleamount
 
-            ##########################################################
-            #  Build material array
-            #
-                elif x.startswith('material ') is True:
-                    matloop = depth
-                    tempstr = x.split(' ')[1]
-                    #
-                    #  double mat name fix - add prop name
-                    #
-                    tempstr = str(mat_counter) + ' ' + tempstr
-                    #print ('mat name:', tempstr)
-                    mat.append(tempstr)
 
-                elif x.startswith ('KdColor ') and depth >= matloop:
-                    mat.append(x)
 
-                elif x.startswith ('KaColor ') and depth >= matloop:
-                    mat.append(x)
 
-                elif x.startswith ('KsColor ') and depth >= matloop:
-                    mat.append(x)
+                ##########################################################
+                #  Location Translations from parents' origin
+                #
 
-                elif x.startswith ('TextureColor ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith('translateZ ') is True: #hardcode Y Z swap
+                        ytranscheck = True
+                    elif x.startswith('k ') is True and ytranscheck == True:
+                        ytranscheck = False
+                        ytransamount = -float(x.split()[2])
+                    elif x.startswith('translateY ') is True: #hardcode Y Z swap
+                        ztranscheck = True
+                    elif x.startswith('k ') is True and ztranscheck == True:
+                        ztranscheck = False
+                        ztransamount = float(x.split()[2])
+                    elif x.startswith('translateX ') is True:
+                        xtranscheck = True
+                    elif x.startswith('k ') is True and xtranscheck == True:
+                        xtranscheck = False
+                        xtransamount = float(x.split()[2])
 
-                elif x.startswith ('NsExponent ') and depth >= matloop:
-                    mat.append(x)
+                ##########################################################
+                #  mesh offsetB
+                #
 
-                elif x.startswith ('tMin ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith('xOffsetB ') is True:
+                        xoffsetb = True
+                        #print (x)
+                    elif x.startswith('initValue ') is True and xoffsetb == True:
+                        xoffsetb = False
+                        print (x)
+                        xoffsetbamount = float(x.split()[1])
+                    elif x.startswith('zOffsetB ') is True: #hardcode Y Z swap
+                        yoffsetb = True
+                        #print (x)
+                    elif x.startswith('initValue ') is True and yoffsetb == True:
+                        yoffsetb = False
+                        print (x)
+                        yoffsetbamount = -float(x.split()[1])
+                    elif x.startswith('yOffsetB ') is True: #hardcode Y Z swap
+                        zoffsetb = True
+                        #print (x)
+                    elif x.startswith('initValue ') is True and zoffsetb == True:
+                        zoffsetb = False
+                        print (x)
+                        zoffsetbamount = float(x.split()[1])
 
-                elif x.startswith ('tMax ') and depth >= matloop:
-                    mat.append(x)
+                ##########################################################
+                #  Build material array
+                #
+                    elif x.startswith('material ') is True:
+                        matloop = depth
+                        tempstr = x.split(' ')[1]
+                        #
+                        #  double mat name fix - add prop name
+                        #
+                        tempstr = str(mat_counter) + ' ' + tempstr
+                        #print ('mat name:', tempstr)
+                        mat.append(tempstr)
 
-                elif x.startswith ('tExpo ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('KdColor ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('bumpStrength ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('KaColor ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('ksIgnoreTexture ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('KsColor ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('reflectThruLights ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('TextureColor ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('reflectThruKd ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('NsExponent ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('textureMap ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('tMin ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('bumpMap ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('tMax ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('reflectionMap ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('tExpo ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('transparencyMap ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('bumpStrength ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('ReflectionColor ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('ksIgnoreTexture ') and depth >= matloop:
+                        mat.append(x)
 
-                elif x.startswith ('reflectionStrength ') and depth >= matloop:
-                    mat.append(x)
+                    elif x.startswith ('reflectThruLights ') and depth >= matloop:
+                        mat.append(x)
 
-                ## elif x.startswith ('}') and matloop == 1:
-                ##     matloop = 0
-                ##     mats.append(mat)
-                ##     mat = []
+                    elif x.startswith ('reflectThruKd ') and depth >= matloop:
+                        mat.append(x)
 
+                    elif x.startswith ('textureMap ') and depth >= matloop:
+                        mat.append(x)
+
+                    elif x.startswith ('bumpMap ') and depth >= matloop:
+                        mat.append(x)
+
+                    elif x.startswith ('reflectionMap ') and depth >= matloop:
+                        mat.append(x)
+
+                    elif x.startswith ('transparencyMap ') and depth >= matloop:
+                        mat.append(x)
+
+                    elif x.startswith ('ReflectionColor ') and depth >= matloop:
+                        mat.append(x)
+
+                    elif x.startswith ('reflectionStrength ') and depth >= matloop:
+                        mat.append(x)
+
+                    ## elif x.startswith ('}') and matloop == 1:
+                    ##     matloop = 0
+                    ##     mats.append(mat)
+                    ##     mat = []
+            except StopIteration:
+                pass
+# end of parser loop
             ##########################################################
             #
             # Append Rotation & Scale List
