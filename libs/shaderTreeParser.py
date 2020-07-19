@@ -188,11 +188,11 @@ def parseMaterial(xs, name='Material'):
             elif command == 'shaderTree':
                 pass # will pick up on the '{'
             elif command in p4_colorNames :
-                mat.p4[ command ] = st.nodeValue(args)
+                mat.p4[ command ] = st.nodeValue([float(i) for i in args])
             elif command in p4_mapNames :
                 mat.p4[ command ] = 'NO_MAP' if args[0] == 'NO_MAP' else ' '.join(args).strip('"')
             elif command in p4_parmNames :
-                mat.p4[ command ] = st.nodeValue(args)
+                mat.p4[ command ] = st.nodeValue([float(i) for i in args])
             elif command == 'fireflyRoot':
                 mat.fireflyRoot = ' '.join(args).strip('"')
             elif command == 'superflyRoot':

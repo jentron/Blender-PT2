@@ -1,7 +1,7 @@
 import shaderTreeParser as stp
 import PT2_open as ptl 
 
-## lexer=D.texts['shaderTreesLexer.py'].as_module()
+## lexer=D.texts['shaderTreeLexer.py'].as_module()
 ## mat=lexer.shaderTreeLexer(r'c:\tmp\Runtime\Libraries\materials\Geep\TransparentBsdf.mt5', dumpfilepath=r'c:\tmp\TransparentBsdf.mt5')
 
 def shaderTreeLexer(filepath, dumpfilepath=None, rawdumpfilepath=None):
@@ -91,7 +91,8 @@ def shaderTreeLexer(filepath, dumpfilepath=None, rawdumpfilepath=None):
     
     # Footer
     print('\t}\n}', file=dumpfile)
-    dumpfile.close()
+    if dumpfilepath:
+        dumpfile.close()
     return(mats)
 
 
