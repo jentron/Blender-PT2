@@ -4,24 +4,24 @@
 # Copyright (c) 2011-2012, HEB Ventures, LLC
 # All rights reserved.
 
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 
-# *    Redistributions of source code must retain the above copyright notice, 
+# *    Redistributions of source code must retain the above copyright notice,
 #     this list of conditions and the following disclaimer.
-# *    Redistributions in binary form must reproduce the above copyright notice, 
-#     this list of conditions and the following disclaimer in the documentation 
+# *    Redistributions in binary form must reproduce the above copyright notice,
+#     this list of conditions and the following disclaimer in the documentation
 #     and/or other materials provided with the distribution.
 
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE 
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
-# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
@@ -42,7 +42,7 @@ import errno
 import sys
 local_module_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),'libs')
 print(local_module_path)
-sys.path.append(local_module_path) 
+sys.path.append(local_module_path)
 
 import PT2_open as ptl
 import RuntimeFolder as Runtime
@@ -83,7 +83,7 @@ def adjustorigin(obj, x, y, z):
     #obj.delta_location[0] = obj.delta_location[0] + x
     #obj.delta_location[1] = obj.delta_location[1] + y
     #obj.delta_location[2] = obj.delta_location[2] + z
-    return 
+    return
 
 # ------------ Missing texture pup -----------------------
 class ErrorPup(bpy.types.Operator):
@@ -124,17 +124,17 @@ class LoadPoserProp(bpy.types.Operator):
         PropArray = []
         geompath = ''
         file_error = ''
- 
+
         #########################################
-        #  
+        #
         # Scan for multi obj's first:
-        # 
+        #
         time_start = time.time()
         file = ptl.PT2_open(self.filepath, 'rt')
 
         rt = Runtime.Runtime(self.filepath)
         #rt.print()
-        
+
         objcounts = []
         morphcounts = []
         for x in file:
@@ -156,26 +156,26 @@ class LoadPoserProp(bpy.types.Operator):
         file.close()
 
 
-        
+
         ##########################################################
-        # Mat counter - to fix duplicate material names    
+        # Mat counter - to fix duplicate material names
 
         print ('==================================================')
         print ('=          checking mat names                    =')
-        print ('==================================================')    
-      
+        print ('==================================================')
+
         mat_counter = 0
         try:
             mat_counter = bpy.mat_counter
         except:
             pass
-        bpy.mat_counter = mat_counter            
-        #bpy.mat_counter = bpy.mat_counter + 1            
+        bpy.mat_counter = mat_counter
+        #bpy.mat_counter = bpy.mat_counter + 1
         mat_counter = bpy.mat_counter
-        
+
         ##########################################################
         # Read and store file
-        #    
+        #
         #
         #  Create multiple prop arrays for multiple custom geometry?
         #
@@ -185,8 +185,8 @@ class LoadPoserProp(bpy.types.Operator):
         if len(objcounts) < 2:
             print ('==================================================')
             print ('=       len of objcounts < 2                     =')
-            print ('==================================================')    
-       
+            print ('==================================================')
+
             file = ptl.PT2_open(self.filepath, 'rt')
             time_start = time.time()
             for x in file:
@@ -195,37 +195,37 @@ class LoadPoserProp(bpy.types.Operator):
                 if x.strip().startswith('objFileGeom 0 0') is True:
                     subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
                     subpath = subpath.strip()
-                    subpath = subpath.replace(':', '\\')                
+                    subpath = subpath.replace(':', '\\')
                     geompath = rt.find_geometry_path(subpath)
-                    
+
                 if x.strip().startswith('geomCustom') is True:
                    print ('Next obj\n')
-                       
-                       
-            print ('Time to read file:', time.time()-time_start)                
+
+
+            print ('Time to read file:', time.time()-time_start)
             file.close()
-    
+
             ##########################################################
             #  read/add separate geometry file if there is one.
-            #         
+            #
             if geompath > '':
                 try:
                     file = ptl.PT2_open(geompath, 'rt')
                     for x in file:
-                        PropArray.append(x.strip())           
-                    file.close()                        
+                        PropArray.append(x.strip())
+                    file.close()
                 except:
                     print ('File not found:', geompath)
                     file_error = 'Geometry file not found'
 
         total_props.append(PropArray)
-        
+
         # bpy.total_props = total_props ## what the heck is this?
 
         if len(objcounts) > 1:
             print ('==================================================')
             print ('=          objcounts > 1                         =')
-            print ('==================================================')    
+            print ('==================================================')
 
             ######################################
             #  Start change here:
@@ -249,7 +249,7 @@ class LoadPoserProp(bpy.types.Operator):
 
             print ('==================================================')
             print ('=        Settin up Prop Array                    =')
-            print ('==================================================')                  
+            print ('==================================================')
             for x in file:
                 if x.strip().startswith('prop ') is True:
                     new_prop = x.strip()
@@ -260,13 +260,13 @@ class LoadPoserProp(bpy.types.Operator):
                            total_props[counter1] = PropArray
                         counter1 = counter1 + 1
                     counter1 = 0
-                    for y in total_props:  
+                    for y in total_props:
                         if y[0] == new_prop:
                            PropArray = total_props[counter1]
                         counter1 = counter1 + 1
-                else:           
+                else:
                     PropArray.append(x.strip())
-                
+
                 if x.strip().startswith('objFileGeom 0 0') is True:
                     # Read outside OBJ file here.
                     subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
@@ -275,8 +275,8 @@ class LoadPoserProp(bpy.types.Operator):
                     try:
                         file = ptl.PT2_open(geompath, 'rt')
                         for x in file:
-                            PropArray.append(x.strip())           
-                        file.close()                        
+                            PropArray.append(x.strip())
+                        file.close()
                     except:
                         print ('File not found:', geompath)
                         file_error = 'Geometry file not found'
@@ -284,12 +284,12 @@ class LoadPoserProp(bpy.types.Operator):
             file.close()
 
 ##############################################################################
- 
-                                                                                        
+
+
 
         ##########################################################
         #  Build arrays
-        # 
+        #
         time_start = time.time()
         if file_error == '':
 
@@ -361,16 +361,16 @@ class LoadPoserProp(bpy.types.Operator):
             rotationtemp =['',0,0,0]
 
 
-            bpy.mat_counter = bpy.mat_counter + 1            
+            bpy.mat_counter = bpy.mat_counter + 1
             mat_counter = bpy.mat_counter
 
             print ('Len of Prop Array:', len(PropArray))
             #print (PropArray)
             print ('==================================================')
             print ('=        Gathering data from prop array          =')
-            print ('==================================================') 
+            print ('==================================================')
             for x in PropArray:
-              
+
                 skip = 0
                 temparray2 = []
                 #print (x)
@@ -380,8 +380,7 @@ class LoadPoserProp(bpy.types.Operator):
                     rotationtemp[0] = prop_name
                     scaletemp[0] = prop_name
                     #bpy.context.object.name=(name)
-                    
-    
+
                 elif x.startswith('v ') is True:
                     #print (x)
                     tempvert = re.sub(r'^v[\t ]+', '', x)
@@ -389,7 +388,7 @@ class LoadPoserProp(bpy.types.Operator):
                     # array = Vector(temp_array) @ mtrx_swap
                     array = [temp_array[0], -temp_array[2], temp_array[1]]  #hardcode Y Z swap
                     verts.append(array)
-                    
+
                 elif x.startswith('usemtl ') is True:
                     current_mat = x.split(' ')[1]
                     #current_mat = current_mat.strip()
@@ -397,17 +396,17 @@ class LoadPoserProp(bpy.types.Operator):
                     #  dupli mat name fix:
                     #
                     current_mat = str(mat_counter) + ' ' + current_mat
-                    
+
                 elif x.startswith('g\t') is True:
                     tempstr = re.sub(r'^g[\t ]+', '', x)
                     tempstr = tempstr.replace('\t', ' ')
                     face_to_group = tempstr
-    
+
                 elif x.startswith('f ') is True:
                     tempstr1 = current_mat
                     tempstr2 = re.sub(r'^f[\t ]+', '', x)
                     facearray.append([tempstr1, tempstr2])
-                    
+
                 elif x.startswith('vt ') is True:
                     tempstr = re.sub(r'^vt[\t ]+', '', x)
                     #print (tempstr)
@@ -459,7 +458,7 @@ class LoadPoserProp(bpy.types.Operator):
                 elif x.startswith('smartparent') is True:
                     parent_object = x.split()[1]
                     child_parent.append([prop_name, parent_object])
-                    print ('parent to:', parent_object)  
+                    print ('parent to:', parent_object)
 
             ##########################################################
             #  Origin
@@ -477,7 +476,7 @@ class LoadPoserProp(bpy.types.Operator):
 
             ##########################################################
             #  Rotation factor
-            #   
+            #
 
                 elif x.startswith('rotateX ') is True:
                      xrotatecheck = True
@@ -496,12 +495,12 @@ class LoadPoserProp(bpy.types.Operator):
                 elif x.startswith('k ') is True and zrotatecheck == True:
                      zrotatecheck = False
                      zrotate = float(x.split()[2])
-                     rotationtemp[3] = zrotate   
+                     rotationtemp[3] = zrotate
 
 
             ##########################################################
             #  Scale factor
-            #   
+            #
 
                 elif x.startswith('propagatingScaleX ') is True:
                      xscalecheck = True
@@ -520,14 +519,14 @@ class LoadPoserProp(bpy.types.Operator):
                 elif x.startswith('k ') is True and zscalecheck == True:
                      zscalecheck = False
                      zscaleamount = float(x.split()[2])
-                     scaletemp[3] = zscaleamount   
-                
+                     scaletemp[3] = zscaleamount
+
 
 
 
             ##########################################################
             #  Location Translations from parents' origin
-            #   
+            #
 
                 elif x.startswith('translateZ ') is True: #hardcode Y Z swap
                      ytranscheck = True
@@ -547,7 +546,7 @@ class LoadPoserProp(bpy.types.Operator):
 
             ##########################################################
             #  mesh offsetB
-            #   
+            #
 
                 elif x.startswith('xOffsetB ') is True:
                      xoffsetb = True
@@ -570,10 +569,10 @@ class LoadPoserProp(bpy.types.Operator):
                      zoffsetb = False
                      print (x)
                      zoffsetbamount = float(x.split()[1])
-    
+
             ##########################################################
             #  Build material array
-            #                 
+            #
                 elif x.startswith('material ') is True:
                     matloop = depth
                     tempstr = x.split(' ')[1]
@@ -583,61 +582,61 @@ class LoadPoserProp(bpy.types.Operator):
                     tempstr = str(mat_counter) + ' ' + tempstr
                     #print ('mat name:', tempstr)
                     mat.append(tempstr)
-                    
+
                 elif x.startswith ('KdColor ') and depth >= matloop:
                     mat.append(x)
-                    
+
                 elif x.startswith ('KaColor ') and depth >= matloop:
                     mat.append(x)
-    
+
                 elif x.startswith ('KsColor ') and depth >= matloop:
-                    mat.append(x)                
-                    
+                    mat.append(x)
+
                 elif x.startswith ('TextureColor ') and depth >= matloop:
-                    mat.append(x)                
-                    
+                    mat.append(x)
+
                 elif x.startswith ('NsExponent ') and depth >= matloop:
-                    mat.append(x)             
-    
+                    mat.append(x)
+
                 elif x.startswith ('tMin ') and depth >= matloop:
-                    mat.append(x)                  
-                    
+                    mat.append(x)
+
                 elif x.startswith ('tMax ') and depth >= matloop:
                     mat.append(x)
-    
+
                 elif x.startswith ('tExpo ') and depth >= matloop:
                     mat.append(x)
-                    
+
                 elif x.startswith ('bumpStrength ') and depth >= matloop:
-                    mat.append(x)                
-                    
+                    mat.append(x)
+
                 elif x.startswith ('ksIgnoreTexture ') and depth >= matloop:
-                    mat.append(x)                
-                    
+                    mat.append(x)
+
                 elif x.startswith ('reflectThruLights ') and depth >= matloop:
                     mat.append(x)
-                    
+
                 elif x.startswith ('reflectThruKd ') and depth >= matloop:
-                    mat.append(x)                
-                    
+                    mat.append(x)
+
                 elif x.startswith ('textureMap ') and depth >= matloop:
-                    mat.append(x)             
-                    
+                    mat.append(x)
+
                 elif x.startswith ('bumpMap ') and depth >= matloop:
-                    mat.append(x)                   
-                    
+                    mat.append(x)
+
                 elif x.startswith ('reflectionMap ') and depth >= matloop:
-                    mat.append(x)                
-                    
+                    mat.append(x)
+
                 elif x.startswith ('transparencyMap ') and depth >= matloop:
-                    mat.append(x)           
-                    
+                    mat.append(x)
+
                 elif x.startswith ('ReflectionColor ') and depth >= matloop:
-                    mat.append(x)                  
-                    
+                    mat.append(x)
+
                 elif x.startswith ('reflectionStrength ') and depth >= matloop:
-                    mat.append(x)                
-                    
+                    mat.append(x)
+
                 ## elif x.startswith ('}') and matloop == 1:
                 ##     matloop = 0
                 ##     mats.append(mat)
@@ -645,15 +644,15 @@ class LoadPoserProp(bpy.types.Operator):
 
             ##########################################################
             #
-            # Append Rotation & Scale List    
+            # Append Rotation & Scale List
             print ('\n')
             print ('==================================================')
             print ('=          Updating Rotation / Scale List        =')
-            print ('==================================================')            
+            print ('==================================================')
 
             rotationlist.append(rotationtemp)
             scalelist.append(scaletemp)
-            
+
             ##########################################################
             #
             #  Add xyz Trans to child_parent
@@ -665,15 +664,15 @@ class LoadPoserProp(bpy.types.Operator):
             #   entry.append(ytransamount)
             #   entry.append(ztransamount)
             #   child_parent[indexc] = entry
-           
 
-                       
-            print ('Time to build prop array:', time.time()-time_start)  
+
+
+            print ('Time to build prop array:', time.time()-time_start)
 
             ##########################################################
             ##########################################################
             # build prop
-            # 
+            #
             #
 
             # Create new mesh
@@ -683,15 +682,15 @@ class LoadPoserProp(bpy.types.Operator):
             faces = []
             ##########################################################
             # Create array of faces
-            #         
+            #
             print ('\n')
             print ('==================================================')
             print ('=        Creating Face array                     =')
-            print ('==================================================')                
-            
+            print ('==================================================')
+
             # mesh.uv_layers.new()
             time_start = time.time()
-           
+
             facecount = 0
             extrafaces = []
             extrafacecount = 1
@@ -717,12 +716,12 @@ class LoadPoserProp(bpy.types.Operator):
 
                 for vert in geomface:
                     temparray.append(int(vert)-1)
-                
+
                 ##########################################################################
                 #
                 #   Must deal with face and UV face together to match up texture map
-                #    
-                
+                #
+
                 if len(temparray) < 5:
                     faces.append(temparray) # list of vert indices [1,2,3,4]
                     temp_mat_array = [facecount, facemat] # face index, mat name
@@ -737,37 +736,37 @@ class LoadPoserProp(bpy.types.Operator):
                     temp_mat_array = [facecount, facemat] # face index, mat name
                     face_mat.append(temp_mat_array) # add face# and mat name to list
                     facecount = facecount + 1
-                    
-                    for q in range(2,y-1): 
-                        # Creates triangles out of remaining vertex list                             
+
+                    for q in range(2,y-1):
+                        # Creates triangles out of remaining vertex list
                         faces.append([temparray[0], temparray[q], temparray[q+1]])
                         if len(TempTextureVerts) > 0:
                            textureverts.append([TempTextureVerts[0], TempTextureVerts[q], TempTextureVerts[q+1]]) # Add matching UV face
                         temp_mat_array = [facecount, facemat] # face index, mat name
                         face_mat.append(temp_mat_array) # add face# and mat name to list
                         facecount = facecount + 1
-   
+
             mesh.from_pydata(verts, edges, faces)
-            mesh.update()  
-            print ('Time to create face array:', time.time()-time_start)               
+            mesh.update()
+            print ('Time to create face array:', time.time()-time_start)
             print ('\n')
             print ('==================================================')
             print ('=         Creating UV Verts                      =')
-            print ('==================================================')    
-            
+            print ('==================================================')
+
             ##########################################################################
             #
             #  Create UV Verts
             #  Skip if no UVmap on incomming mesh
-            #  
+            #
 #            from random import random
-            time_start = time.time()    
+            time_start = time.time()
             ## print ('Len of textureverts:', len(textureverts))
             ## print(textureverts[0])
             ## print(UVvertices[0])
             if( len(UVvertices) > 0 ):
                 uvlayer = mesh.uv_layers.new()
-    
+
                 mesh.uv_layers.active = uvlayer
                 facecount = 0
                 longfaces = []
@@ -781,12 +780,12 @@ class LoadPoserProp(bpy.types.Operator):
             import bpy_extras
             bpy_extras.object_utils.object_data_add(context, mesh, operator=None)
 
-            ##########################################################################            
             ##########################################################################
-            # 
+            ##########################################################################
+            #
             #  Adjustmenst from scale, rotation, offsets
-            bpy.context.view_layer.update()    
-        
+            bpy.context.view_layer.update()
+
             newobj = bpy.context.active_object
             print ('newobj:', newobj.name)
 
@@ -798,12 +797,12 @@ class LoadPoserProp(bpy.types.Operator):
             ##########################################################################
             #
             #  Morphs
-            # 
-            
+            #
+
             print ('\n')
             print ('==================================================')
             print ('=         Creating Shapekeys                     =')
-            print ('==================================================')    
+            print ('==================================================')
 
             for morph in morphs:
                 morph.print()
@@ -813,11 +812,11 @@ class LoadPoserProp(bpy.types.Operator):
             ##########################################################################
             #
             #  Materials
-            # 
-            
+            #
+
             print ('==================================================')
             print ('=         Creating Materials                     =')
-            print ('==================================================')    
+            print ('==================================================')
 
             mat_counter = 1
             print ('mats[0]', mats[0])
@@ -828,7 +827,7 @@ class LoadPoserProp(bpy.types.Operator):
                 mesh_name = mesh.name
                 mat1 = matlib.Material(mat_name)
                 #print ('len of mat:', len(mat))
-                
+
                 # Create material sub
                 # create_material(mat, mat_name, mesh_name, contentloc)
                 for info in mat:
@@ -837,7 +836,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #  Set material Color values
                     #
                     ###
-            
+
                     #  Diffuse Color
                     if info.startswith('KdColor ') is True:
                         tempstr = info.replace('KdColor ','')
@@ -883,7 +882,7 @@ class LoadPoserProp(bpy.types.Operator):
                         tempstr = info.replace('reflectionStrength ', '')
                         tempstr = tempstr.strip()
                         mat1.reflect_factor = float(tempstr)
-                        
+
                     elif info.startswith('tMax ') is True:
                         tempstr = info.replace('tMax ','')
                         tempstr = tempstr.strip()
@@ -932,7 +931,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #############################################################
 
                     #############################################################
-                    # 
+                    #
                     #  Texture Map
                     #
                     elif info.startswith('textureMap ') is True and info.endswith('NO_MAP') is False:
@@ -946,7 +945,7 @@ class LoadPoserProp(bpy.types.Operator):
                         tempstr = tempstr.strip('"')
                         texturepath = rt.find_texture_path(tempstr)
 
-                        #######################################            
+                        #######################################
                         # Load image
                         #
 
@@ -954,7 +953,7 @@ class LoadPoserProp(bpy.types.Operator):
                             #print ('texturepath:', texturepath)
                             tempfile = open(texturepath, 'r')
                             tempfile.close()
-                            
+
                             # Create texture
                             # get texture name from image name
                             texture_name = os.path.basename(texturepath)
@@ -965,7 +964,7 @@ class LoadPoserProp(bpy.types.Operator):
                             try: # check if exists first
                                 tex1 = bpy.data.textures[texture_name]
                             except:
-                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')    
+                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
                                 DIR = os.path.dirname(texturepath)
                                 newimage = load_image(texturepath, DIR)
 
@@ -977,11 +976,11 @@ class LoadPoserProp(bpy.types.Operator):
 
                         except:
                             bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
-                            print ('Texture Map not found: %s'%texturepath)  
-                                
+                            print ('Texture Map not found: %s'%texturepath)
+
 
                     #############################################################
-                    # 
+                    #
                     #  Bump Map
                     #
                     elif info.startswith('bumpMap ') is True and info.endswith('NO_MAP') is False:
@@ -991,15 +990,15 @@ class LoadPoserProp(bpy.types.Operator):
                         tempstr = tempstr.strip('"')
                         texturepath = rt.find_texture_path(tempstr)
 
-                        #######################################            
+                        #######################################
                         # Load image
                         #
-                        
+
                         try:
                             #print ('texturepath:', texturepath)
                             tempfile = open(texturepath, 'r')
                             tempfile.close()
-                            
+
                             # Create texture
                             # get texture name from image name
                             texture_name = os.path.basename(texturepath)
@@ -1010,7 +1009,7 @@ class LoadPoserProp(bpy.types.Operator):
                             try: # check if exists first
                                 tex1 = bpy.data.textures[texture_name]
                             except:
-                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')    
+                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
                                 DIR = os.path.dirname(texturepath)
                                 newimage = load_image(texturepath, DIR)
 
@@ -1022,10 +1021,10 @@ class LoadPoserProp(bpy.types.Operator):
 
                         except:
                             print ('Bump Map not found: %s'%texturepath)
-                                
+
 
                     #############################################################
-                    # 
+                    #
                     #  Alpha Map
                     #
                     elif info.startswith('transparencyMap ') is True and info.endswith('NO_MAP') is False:
@@ -1035,15 +1034,15 @@ class LoadPoserProp(bpy.types.Operator):
                         tempstr = tempstr.strip('"')
                         texturepath = rt.find_texture_path(tempstr)
 
-                        #######################################            
+                        #######################################
                         # Load image
                         #
-                        
+
                         try:
                             #print ('texturepath:', texturepath)
                             tempfile = open(texturepath, 'r')
                             tempfile.close()
-                            
+
                             # Create texture
                             # get texture name from image name
                             texture_name = os.path.basename(texturepath)
@@ -1068,7 +1067,7 @@ class LoadPoserProp(bpy.types.Operator):
                             print ('Transparent Map not found: %s'%texturepath)
 
                     #############################################################
-                    # 
+                    #
                     #  Reflection Map
                     #
                     elif info.startswith('reflectionMap ') is True and info.endswith('NO_MAP') is False:
@@ -1078,15 +1077,15 @@ class LoadPoserProp(bpy.types.Operator):
                         tempstr = tempstr.strip('"')
                         texturepath = rt.find_texture_path(tempstr)
 
-                        #######################################            
+                        #######################################
                         # Load image
                         #
-                        
+
                         try:
                             #print ('texturepath:', texturepath)
                             tempfile = open(texturepath, 'r')
                             tempfile.close()
-                            
+
                             # Create texture
                             # get texture name from image name
                             texture_name = os.path.basename(texturepath)
@@ -1097,7 +1096,7 @@ class LoadPoserProp(bpy.types.Operator):
                             try: # check if exists first
                                 tex1 = bpy.data.textures[texture_name]
                             except:
-                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')    
+                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
                                 DIR = os.path.dirname(texturepath)
                                 newimage = load_image(texturepath, DIR)
 
@@ -1111,26 +1110,26 @@ class LoadPoserProp(bpy.types.Operator):
                             print ('Reflection Map not found: %s'%texturepath)
 
 ####################################################################################################################
-        
+
                 if mesh.materials.__contains__(mat1.name):
                     #print ('True')
                     skip = 1
                 else:
                     mesh.materials.append(mat1.createBlenderMaterial())
                     skip = 1
-                    #print ('False')            
-                    
+                    #print ('False')
+
 
                 #############################################################
-                # 
+                #
                 #  Assign faces to materials
                 #
-                
+
                 #print ('\n')
                 #print ('==================================================')
                 #print ('=         Assigning Faces to Materials           =')
-                #print ('==================================================')    
-                
+                #print ('==================================================')
+
                 for face in face_mat:
                     #print (face)
                     mat_count = 0
@@ -1139,15 +1138,15 @@ class LoadPoserProp(bpy.types.Operator):
                         if mat.name == face[1]:
                             mesh.polygons[face[0]].material_index = mat_count
                         mat_count = mat_count + 1
-                
+
 ##########################################################
 ##########################################################
-    
-            print ('Time to create Materials:', time.time()-time_start)  
-            print ('\n\n')     
+
+            print ('Time to create Materials:', time.time()-time_start)
+            print ('\n\n')
             print ('len of verts:;', len(verts))
-            print ('len of facearray:', len(facearray))  
-            print ('  Example:', facearray[0])  
+            print ('len of facearray:', len(facearray))
+            print ('  Example:', facearray[0])
             print ('len of UVverts:', len(UVvertices))
             print ('Number of Mats:', len(mats))
             print ('Len Faces:', len(faces))
@@ -1156,23 +1155,23 @@ class LoadPoserProp(bpy.types.Operator):
             print ('example:', face_mat[0])
             print ('last face_mat:', face_mat[len(face_mat)-1])
 
-        ############################################    
+        ############################################
         # Adjust mesh and locations:
         #
         print ('\n')
         print ('==================================================')
         print ('=          Getting Offsetb and Trans data        =')
-        print ('==================================================')    
+        print ('==================================================')
 
-        
-        file = ptl.PT2_open(self.filepath, 'rt')        
-        
+
+        file = ptl.PT2_open(self.filepath, 'rt')
+
         '''
         prop name, parent, prop's offsetb
         adjust locations by child and all parent translations
         adjust child mesh only by child's offsetb
-        
-        values' 
+
+        values'
         name
         smartparent
         Xoffsetb
@@ -1187,36 +1186,36 @@ class LoadPoserProp(bpy.types.Operator):
         transxcheck = 0
         transycheck = 0
         transzcheck = 0
-        
+
         for x in file:
-        
+
             if x.startswith('prop ') is True:
                 prop = x.strip().replace('prop ', '')
                 prop = prop.strip()
-                #print ('prop:', prop)   
+                #print ('prop:', prop)
                 skipcheck = False
                 for y in proparray:
                     if y[0] == prop:
                         skipcheck = True
                 if skipcheck == False:
                     proparray.append([prop])
-           
+
             if x.startswith('\tsmartparent ') is True:
                 parent = x.strip().replace('smartparent ', '')
                 parent = parent.strip()
-                #print ('parent:', parent)  
+                #print ('parent:', parent)
                 for y in proparray:
                     if y[0] == prop:
                         y.append(parent)
-                        
-            #  Check for parent first!!! Before adding offsets:      
+
+            #  Check for parent first!!! Before adding offsets:
             #
             #  This adds offset ASSUMING it's always in XYZ order.
             #
-        
+
             if x.startswith('\t\txOffsetB ') is True:
                 xcheck = 1
-                
+
             if x.startswith('\t\t\tinitValue ') is True and xcheck == 1:
                 xoff = x.strip().replace('initValue ', '')
                 xoff = xoff.strip()
@@ -1226,11 +1225,11 @@ class LoadPoserProp(bpy.types.Operator):
                         if len(y) == 1:
                             y.append('no parent')
                         y.append(xoff)
-                xcheck = 0                
-                
+                xcheck = 0
+
             if x.startswith('\t\tyOffsetB ') is True:
                 ycheck = 1
-                
+
             if x.startswith('\t\t\tinitValue ') is True and ycheck == 1:
                 yoff = x.strip().replace('initValue ', '')
                 yoff = yoff.strip()
@@ -1241,10 +1240,10 @@ class LoadPoserProp(bpy.types.Operator):
                             y.append('no parent')
                         y.append(yoff)
                 ycheck = 0
-                
+
             if x.startswith('\t\tzOffsetB ') is True:
                 zcheck = 1
-                
+
             if x.startswith('\t\t\tinitValue ') is True and zcheck == 1:
                 zoff = x.strip().replace('initValue ', '')
                 zoff = zoff.strip()
@@ -1254,13 +1253,13 @@ class LoadPoserProp(bpy.types.Operator):
                         if len(y) == 1:
                             y.append('no parent')
                         y.append(zoff)
-                zcheck = 0  
-                
+                zcheck = 0
+
             #########################################################################
-            
+
             if x.startswith('\t\ttranslateX ') is True:
                 transxcheck = 1
-                
+
             if x.startswith('\t\t\t\tk ') is True and transxcheck == 1:
                 xtran = x.strip().replace('k ', '')
                 xtran = xtran.strip().split()
@@ -1270,11 +1269,11 @@ class LoadPoserProp(bpy.types.Operator):
                         if len(y) == 1:
                             y.append('no parent')
                         y.append(xtran)
-                transxcheck = 0    
-                
+                transxcheck = 0
+
             if x.startswith('\t\ttranslateZ ') is True: #hardcode Y Z swap
                 transycheck = 1
-                
+
             if x.startswith('\t\t\t\tk ') is True and transycheck == 1:
                 ytran = x.strip().replace('k ', '')
                 ytran = ytran.strip().split()
@@ -1284,11 +1283,11 @@ class LoadPoserProp(bpy.types.Operator):
                         if len(y) == 1:
                             y.append('no parent')
                         y.append(ytran)
-                transycheck = 0   
-                
+                transycheck = 0
+
             if x.startswith('\t\ttranslateY ') is True: #hardcode Y Z swap
                 transzcheck = 1
-                
+
             if x.startswith('\t\t\t\tk ') is True and transzcheck == 1:
                 ztran = x.strip().replace('k ', '')
                 ztran = ztran.strip().split()
@@ -1298,16 +1297,16 @@ class LoadPoserProp(bpy.types.Operator):
                         if len(y) == 1:
                             y.append('no parent')
                         y.append(ztran)
-                transzcheck = 0  
-            #########################################################################              
-            
+                transzcheck = 0
+            #########################################################################
+
         file.close()
         print ('\n---------------------------------------------------------------------')
         counter = 0
         print ('\n')
         print ('==================================================')
         print ('=         Adjusting origin and mesh              =')
-        print ('==================================================')    
+        print ('==================================================')
         for x in proparray:
             counter = counter + 1
             print ('Counter:', counter)
@@ -1317,7 +1316,7 @@ class LoadPoserProp(bpy.types.Operator):
             adjustorigin(x[0], x[2], -x[4], x[3]) #hardcode Y Z swap
             print ('x[1]', x[1])
             objslist = bpy.data.objects
-            
+
             parentcheck = 0
             for d in objslist:
                 print (d.name)
@@ -1335,13 +1334,13 @@ class LoadPoserProp(bpy.types.Operator):
                             parent = z[1]
                     if parent == 'no parent':
                         offsearch = 0
-        
+
             print ('\n')
         print ('--------------------------------------------------------------------')
 
         bpy.context.view_layer.update()
 
-        ############################################    
+        ############################################
         # collect locations / parent / reset locations
         #
         print ('----------------------------------------')
@@ -1353,18 +1352,18 @@ class LoadPoserProp(bpy.types.Operator):
             print ('prop:', obj.matrix_world[3])
             location_array.append([obj, location])
             print ('----------------------------------------')
-        
+
         bpy.context.view_layer.update()
 
         #----------------------------------------------
 
-        ############################################    
+        ############################################
         # Parent objects After adjusting mesh & locations:
         #
         print ('\n')
         print ('==================================================')
         print ('=          Parenting Objects                     =')
-        print ('==================================================')    
+        print ('==================================================')
         if len(child_parent)>0:
             print ('child_parent list:', child_parent)
             for x in child_parent:
@@ -1379,7 +1378,7 @@ class LoadPoserProp(bpy.types.Operator):
             print ('\n\n')
 
 
-        ############################################    
+        ############################################
         # reset locations:
         #
         for x in location_array:
@@ -1391,20 +1390,20 @@ class LoadPoserProp(bpy.types.Operator):
 
         bpy.context.view_layer.update()
 
-        ############################################    
-        # 
+        ############################################
+        #
         #  Scale and rotate props
         #
         print ('\n')
         print ('==================================================')
         print ('=          Scaling and Rotatin                   =')
-        print ('==================================================')    
+        print ('==================================================')
 
         # Rotation
         # degr = (3.14*2) / 360 better to hard-code more exact values
         degr = 0.017453292519943295
         pihalf = 1.5707963267948966
-        
+
         print ('--------------------------------------------------------')
         print ('Rotating:')
         for x in rotationlist:
@@ -1422,7 +1421,7 @@ class LoadPoserProp(bpy.types.Operator):
             if x[1] > 0 and x[2] > 0 and x[3] > 0:
                 obj.scale = (x[1], x[2], x[3])
             bpy.context.view_layer.update()
-            
+
 
         ###########################################################
         ###########################################################
@@ -1443,15 +1442,15 @@ class LoadPoserProp(bpy.types.Operator):
                    # check_prop.delta_rotation_euler = (pihalf, 0, 0)
                    pass
         else:
-             # newobj.delta_rotation_euler = (pihalf, 0, 0)  
+             # newobj.delta_rotation_euler = (pihalf, 0, 0)
              pass
         ###########################################################
-  
 
-            
+
+
         total_time = time.time() - time_start
         print ("Seconds: %.2f" % (total_time))
-        print("Minutes: %.2f" % (total_time/60))  
+        print("Minutes: %.2f" % (total_time/60))
         return {'FINISHED'}
 
     def invoke(self, context, event):
