@@ -785,7 +785,8 @@ class LoadPoserProp(bpy.types.Operator):
             time_start = time.time()
 
             bpy.PT2_raw_mats = raw_mats
-            bpy.PT2_mats={}
+            bpy.PT2_mats={} # save the parsed array into the bpy for future use
+
             for raw_mat in raw_mats: # raw_mat[0] contains material name
                 bpy.PT2_mats[raw_mat[0]] = stp.parseMaterial( iter(raw_mat[1]), raw_mat[0] )
                 print(raw_mat[0], type(bpy.PT2_mats[raw_mat[0]]))

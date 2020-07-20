@@ -261,7 +261,7 @@ class Read_Mat(Operator, ImportHelper):
         if dumpfile:
             dumpfile.close()
         
-        
+        bpy.PT2_mats=mats # save the parsed array into the bpy for future use
         #########################################
         #  
         # Change / Create Mats for selected Object:
