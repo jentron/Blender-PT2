@@ -298,7 +298,7 @@ class PT2_PT_Mat_Reader(bpy.types.Panel):
     bl_label = "Poser Mat Reader Panel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
-    bl_context = "scene"
+    bl_context = "material"
  
     def draw(self, context):
         
