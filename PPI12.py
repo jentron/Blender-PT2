@@ -160,22 +160,6 @@ class LoadPoserProp(bpy.types.Operator):
 
 
         ##########################################################
-        # Mat counter - to fix duplicate material names
-
-        print ('==================================================')
-        print ('=          checking mat names                    =')
-        print ('==================================================')
-
-        mat_counter = 0
-        try:
-            mat_counter = bpy.mat_counter
-        except:
-            pass
-        bpy.mat_counter = mat_counter
-        #bpy.mat_counter = bpy.mat_counter + 1
-        mat_counter = bpy.mat_counter
-
-        ##########################################################
         # Read and store file
         #
         #
@@ -367,10 +351,6 @@ class LoadPoserProp(bpy.types.Operator):
             #rotationlist = []
             rotationtemp =['',0,0,0]
 
-
-            bpy.mat_counter = bpy.mat_counter + 1
-            mat_counter = bpy.mat_counter
-
             print ('Len of Prop Array:', len(PropArray))
             #print (PropArray)
             print ('==================================================')
@@ -402,11 +382,7 @@ class LoadPoserProp(bpy.types.Operator):
 
                     elif x.startswith('usemtl ') is True:
                         current_mat = x.split(' ')[1]
-                        #current_mat = current_mat.strip()
-                        #
-                        #  dupli mat name fix:
-                        #
-                        current_mat = str(mat_counter) + ' ' + current_mat
+                        current_mat = current_mat.strip()
 
                     elif x.startswith('g\t') is True:
                         tempstr = re.sub(r'^g[\t ]+', '', x)
