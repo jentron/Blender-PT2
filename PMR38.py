@@ -261,7 +261,7 @@ class Read_Mat(Operator, ImportHelper):
         if dumpfile:
             dumpfile.close()
         
-        
+        bpy.PT2_mats=mats # save the parsed array into the bpy for future use
         #########################################
         #  
         # Change / Create Mats for selected Object:
@@ -298,7 +298,7 @@ class PT2_PT_Mat_Reader(bpy.types.Panel):
     bl_label = "Poser Mat Reader Panel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
-    bl_context = "scene"
+    bl_context = "material"
  
     def draw(self, context):
         
