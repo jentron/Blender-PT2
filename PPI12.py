@@ -118,6 +118,13 @@ class LoadPoserProp(bpy.types.Operator):
 
     filter_glob : StringProperty(default="*.pp2;*.ppz;*.hr2;*.hrz", options={'HIDDEN'})
     filepath : bpy.props.StringProperty(subtype="FILE_PATH")
+    
+    overwrite: BoolProperty(
+        name="Overwrite Materials",
+        description="Overwrite current materials with the same name",
+        default=False,
+    )
+
     CPT = []
     child_parent = []
 
@@ -759,23 +766,26 @@ class LoadPoserProp(bpy.types.Operator):
             print ('==================================================')
 
             time_start = time.time()
-
+            # the name that comes back from createBlenderMaterial
+            # may not be the name we asked for so we'll make a mapping
+            mat_name_map = {}
+            
             bpy.PT2_raw_mats = raw_mats
             bpy.PT2_mats={} # save the parsed array into the bpy for future use
 
             for raw_mat in raw_mats: # raw_mat[0] contains material name
                 bpy.PT2_mats[raw_mat[0]] = stp.parseMaterial( iter(raw_mat[1]), raw_mat[0] )
-                print(raw_mat[0], type(bpy.PT2_mats[raw_mat[0]]))
-                mat1 = cbm4.createBlenderMaterialfromP4(raw_mat[0], bpy.PT2_mats[raw_mat[0]], runtime, overwrite=True)
+                # print(raw_mat[0], type(bpy.PT2_mats[raw_mat[0]]))
+                mat1 = cbm4.createBlenderMaterialfromP4(raw_mat[0], bpy.PT2_mats[raw_mat[0]], runtime, overwrite=self.overwrite)
+                mat_name_map[mat1.name] = raw_mat[0]
 
 ####################################################################################################################
 
-                if mesh.materials.__contains__(raw_mat[0]):
+                if mesh.materials.__contains__(mat1.name):
                     #print ('True')
-                    skip = 1
+                    pass
                 else:
                     mesh.materials.append(mat1)
-                    skip = 1
                     #print ('False')
 
 
@@ -793,8 +803,7 @@ class LoadPoserProp(bpy.types.Operator):
                     #print (face)
                     mat_count = 0
                     for mat in mesh.materials:
-                        skip = 1
-                        if mat.name == face[1]:
+                        if mat_name_map[mat.name] == face[1]:
                             mesh.polygons[face[0]].material_index = mat_count
                         mat_count = mat_count + 1
 
