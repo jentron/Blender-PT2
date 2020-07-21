@@ -191,8 +191,8 @@ class CharacterImport(bpy.types.Operator):
         #
 
         print ('filepath:', self.filepath)
-        rt = Runtime.Runtime(self.filepath)
-        #rt.print()
+        runtime = Runtime.Runtime(self.filepath)
+        #runtime.print()
 
         cr2 = CR2Class()
 
@@ -266,11 +266,15 @@ class CharacterImport(bpy.types.Operator):
         #print ('-------------')
 
         depth = 0 # count of open braces
-        mats = []
-        mat = []
-        matloop = -1
-        mat_counter = 'NA '
+
         current_mat = 'No Mat'
+        raw_mats = [] # an array of the unparsed materials
+        mat_name = ''
+        mats = {}
+        comps = []    # a list of the material unparsed lines
+        readcomps = False
+        mat_depth = 0
+
         morphs = []
         morph = Morph()
         morphloop = -1
@@ -290,7 +294,7 @@ class CharacterImport(bpy.types.Operator):
 
 
 # start of parser loop
-        for y in file:
+        for y in file: #file is already an iterable
             x = y.strip() # do we .strip() here instead of at every level below?
             if x.startswith('actor '):
                 tempstr = x.replace('actor ', '')
@@ -410,81 +414,35 @@ class CharacterImport(bpy.types.Operator):
                     morphloop = -1
                     morphs.append(morph)
                     morph = Morph()
-                if matloop >= depth:
-                    matloop = -1
-                    mats.append(mat)
-                    mat = []
                     # print('Depth--: ', depth,  morphloop, matloop)
 
             ##########################################################
             #  Build material array
             #
             elif x.startswith('material ') is True:
-                matloop = depth
-                #tempstr = x.lstrip('material ')
-                tempstr = x.split(' ')[1]
-                #
-                #  double mat name fix - add prop name
-                #
+                #print ('Mat:', line.replace('material', ''))
+                mat_name = x.replace('material', '').strip()
+                readcomps = True # Turn on component reader
+                print ('Mat Name:', mat_name)
 
-                #tempstr = str(mat_counter) + ' ' + tempstr
+                while readcomps:
+                    line = next(file).strip()
 
-                #print ('mat name:', tempstr)
-                mat.append(tempstr)
+                    if line.startswith('{') is True and readcomps is True:
+                        mat_depth += 1
 
-            elif x.startswith ('KdColor ') and depth >= matloop:
-                    mat.append(x)
+                    elif line.startswith('}') is True and mat_depth > 0:
+                        mat_depth -= 1
 
-            elif x.startswith ('KaColor ') and depth >= matloop:
-                    mat.append(x)
+                    comps.append([mat_depth, line.split()]) 
 
-            elif x.startswith ('KsColor ') and depth >= matloop:
-                    mat.append(x)
+                    # print(mat_depth, line)
+                    if mat_depth == 0 and readcomps is True:
+                        readcomps=False
+                        raw_mats.append([mat_name, comps])
+                        mat_name = ''
+                        comps = []
 
-            elif x.startswith ('TextureColor ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('NsExponent ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('tMin ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('tMax ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('tExpo ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('bumpStrength ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('ksIgnoreTexture ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('reflectThruLights ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('reflectThruKd ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('textureMap ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('bumpMap ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('reflectionMap ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('transparencyMap ') and depth >= matloop:
-                    mat.append(x)
-
-            elif x.startswith ('ReflectionColor ') and depth >= matloop:
-                   mat.append(x)
-
-            elif x.startswith ('reflectionStrength ') and depth >= matloop:
-                    mat.append(x)
 # end of parser loop
 
 
@@ -687,7 +645,7 @@ class CharacterImport(bpy.types.Operator):
         char['GeomPath'] = cr2.geompath
         print (self.filepath)
         print ('geompath:', cr2.geompath)
-        fullgeompath=rt.find_geometry_path(cr2.geompath)
+        fullgeompath=runtime.find_geometry_path(cr2.geompath)
         print(fullgeompath)
 
         ###########################################
@@ -1004,309 +962,24 @@ class CharacterImport(bpy.types.Operator):
             print ('=         Creating Materials                     =')
             print ('==================================================')
 
-            mat_counter = 1
             time_start = time.time()
 
-            print ('mats[0]', mats[0])
+            bpy.PT2_raw_mats = raw_mats
+            bpy.PT2_mats={} # save the parsed array into the bpy for future use
 
-            time_start = time.time()
-            for mat in mats:
-                mat_name = mat[0]
-                mesh_name = mesh.name
-                mat1 = matlib.Material(mat_name)
-                #print ('len of mat:', len(mat))
-
-                # Create material sub
-                # create_material(mat, mat_name, mesh_name, contentloc)
-                for info in mat:
-                    ###
-                    #
-                    #  Set material Color values
-                    #
-                    ###
-
-                    #  Diffuse Color
-                    if info.startswith('KdColor ') is True:
-                        tempstr = info.replace('KdColor ','')
-                        array = [float(s) for s in tempstr.split()]
-                        if len(array) == 3:
-                            array[3] = 0
-                        mat1.diffuse_color = array
-
-                    #  Specular Color
-                    elif info.startswith('KsColor ') is True:
-                        tempstr = info.replace('KsColor ','')
-                        array = [float(s) for s in tempstr.split()]
-                        if len(array) == 3:
-                            array[3] = 0
-                        mat1.specular_color = array
-
-                    #  Ambient Color
-                    elif info.startswith('KaColor ') is True:
-                        tempstr = info.replace('KaColor ','')
-                        array = [float(s) for s in tempstr.split()]
-                        if len(array) == 3:
-                            array[3] = 0
-                        mat1.ambient_color = array
-
-                    #  Texture Color
-                    elif info.startswith('TextureColor ') is True:
-                        tempstr = info.replace('TextureColor ','')
-                        array = [float(s) for s in tempstr.split()]
-                        if len(array) == 3:
-                            array[3] = 0
-                        mat1.texture_color = array
-
-                    #  Reflection Color
-                    elif info.startswith('ReflectionColor ') is True:
-                        tempstr = info.replace('ReflectionColor ','')
-                        array = [float(s) for s in tempstr.split()]
-                        if len(array) == 3:
-                            array[3] = 0
-                        mat1.reflection_color = array
-
-                    #  Reflection Strength
-                    elif info.startswith('reflectionStrength ') is True:
-                        tempstr = info.replace('reflectionStrength ', '')
-                        tempstr = tempstr.strip()
-                        mat1.reflect_factor = float(tempstr)
-
-                    elif info.startswith('tMax ') is True:
-                        tempstr = info.replace('tMax ','')
-                        tempstr = tempstr.strip()
-                        mat1.tMax = float(tempstr)
-
-                    elif info.startswith('tMin ') is True:
-                        tempstr = info.replace('tMin ','')
-                        tempstr = tempstr.strip()
-                        mat1.tMin = float(tempstr)
-
-                    elif info.startswith('tExpo ') is True:
-                        tempstr = info.replace('tExpo ','')
-                        tempstr = tempstr.strip()
-                        mat1.tExpo = float(tempstr)
-
-                    elif info.startswith('NsExponent ') is True:
-                        tempstr = info.replace('NsExponent ','')
-                        tempstr = tempstr.strip()
-                        mat1.ns_exponent = float(tempstr)
-
-                    elif info.startswith('bumpStrength ') is True:
-                        tempstr = info.replace('bumpStrength ','')
-                        tempstr = tempstr.strip()
-                        mat1.bumpStrength = float(tempstr)
-
-                    elif info.startswith('ksIgnoreTexture ') is True:
-                        tempstr = info.replace('ksIgnoreTexture ','')
-                        tempstr = tempstr.strip()
-                        mat1.ks_ignore_texture = float(tempstr)
-
-                    elif info.startswith('reflectThruLights ') is True:
-                        tempstr = info.replace('reflectThruLights ','')
-                        tempstr = tempstr.strip()
-                        mat1.reflect_thru_lights = float(tempstr)
-
-                    elif info.startswith('reflectThruKd ') is True:
-                        tempstr = info.replace('reflectThruKd ','')
-                        tempstr = tempstr.strip()
-                        mat1.reflect_thru_kd = float(tempstr)
-
-
-                    #############################################################
-                    #
-                    #  Set Texture values
-                    #
-                    #############################################################
-
-                    #############################################################
-                    #
-                    #  Texture Map
-                    #
-                    elif info.startswith('textureMap ') is True and info.endswith('NO_MAP') is False:
-                        tempstr=info.lstrip('textureMap ')
-                        tempstr = tempstr.strip('"')
-                        if tempstr.startswith('GetStringRes') is True:
-                            cmd, lib, lin, foo = re.split("[(,)]", tempstr)
-                            tempstr = GetStringRes.stringResourceList[int(lib)][int(lin)]
-                        if tempstr.endswith(' 0 0') is True:
-                            tempstr = tempstr.rstrip(' 0 0')
-                        tempstr = tempstr.strip('"')
-                        texturepath = rt.find_texture_path(tempstr)
-
-                        #######################################
-                        # Load image
-                        #
-
-                        try:
-                            #print ('texturepath:', texturepath)
-                            tempfile = open(texturepath, 'r')
-                            tempfile.close()
-
-                            # Create texture
-                            # get texture name from image name
-                            texture_name = os.path.basename(texturepath)
-                            if len(texture_name) > 20:
-                                print ('short name', texture_name[:21])
-                                texture_name = texture_name[:21]
-                            # create texture
-                            try: # check if exists first
-                                tex1 = bpy.data.textures[texture_name]
-                            except:
-                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
-                                DIR = os.path.dirname(texturepath)
-                                newimage = load_image(texturepath, DIR)
-
-                                # Use new image
-                                tex1.image = newimage
-
-                            # Add texture slot to material
-                            mat1.diffuse_texture=tex1.image
-
-                        except:
-                            bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
-                            print ('Texture Map not found: %s'%texturepath)
-
-
-                    #############################################################
-                    #
-                    #  Bump Map
-                    #
-                    elif info.startswith('bumpMap ') is True and info.endswith('NO_MAP') is False:
-                        tempstr=info.lstrip('bumpMap ')
-                        if tempstr.endswith(' 0 0') is True:
-                            tempstr = tempstr.rstrip(' 0 0')
-                        tempstr = tempstr.strip('"')
-                        texturepath = rt.find_texture_path(tempstr)
-
-                        #######################################
-                        # Load image
-                        #
-
-                        try:
-                            #print ('texturepath:', texturepath)
-                            tempfile = open(texturepath, 'r')
-                            tempfile.close()
-
-                            # Create texture
-                            # get texture name from image name
-                            texture_name = os.path.basename(texturepath)
-                            if len(texture_name) > 20:
-                                print ('short name', texture_name[:21])
-                                texture_name = texture_name[:21]
-                            # create texture
-                            try: # check if exists first
-                                tex1 = bpy.data.textures[texture_name]
-                            except:
-                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
-                                DIR = os.path.dirname(texturepath)
-                                newimage = load_image(texturepath, DIR)
-
-                                # Use new image
-                                tex1.image = newimage
-
-                            # Add texture slot to material
-                            mat1.bump_texture=tex1.image
-
-                        except:
-                            print ('Bump Map not found: %s'%texturepath)
-
-
-                    #############################################################
-                    #
-                    #  Alpha Map
-                    #
-                    elif info.startswith('transparencyMap ') is True and info.endswith('NO_MAP') is False:
-                        tempstr=info.lstrip('transparencyMap ')
-                        if tempstr.endswith(' 0 0') is True:
-                            tempstr = tempstr.rstrip(' 0 0')
-                        tempstr = tempstr.strip('"')
-                        texturepath = rt.find_texture_path(tempstr)
-
-                        #######################################
-                        # Load image
-                        #
-
-                        try:
-                            #print ('texturepath:', texturepath)
-                            tempfile = open(texturepath, 'r')
-                            tempfile.close()
-
-                            # Create texture
-                            # get texture name from image name
-                            texture_name = os.path.basename(texturepath)
-                            if len(texture_name) > 20:
-                                print ('short name', texture_name[:21])
-                                texture_name = texture_name[:21]
-                            # create texture
-                            try: # check if exists first
-                                tex1 = bpy.data.textures[texture_name]
-                            except:
-                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
-                                DIR = os.path.dirname(texturepath)
-                                newimage = load_image(texturepath, DIR)
-
-                                # Use new image
-                                tex1.image = newimage
-
-                            # Add texture slot to material
-                            mat1.transparent_texture=tex1.image
-
-                        except:
-                            print ('Transparent Map not found: %s'%texturepath)
-
-                    #############################################################
-                    #
-                    #  Reflection Map
-                    #
-                    elif info.startswith('reflectionMap ') is True and info.endswith('NO_MAP') is False:
-                        tempstr=info.lstrip('reflectionMap ')
-                        if tempstr.endswith(' 0 0') is True:
-                            tempstr = tempstr.rstrip(' 0 0')
-                        tempstr = tempstr.strip('"')
-                        texturepath = rt.find_texture_path(tempstr)
-
-                        #######################################
-                        # Load image
-                        #
-
-                        try:
-                            #print ('texturepath:', texturepath)
-                            tempfile = open(texturepath, 'r')
-                            tempfile.close()
-
-                            # Create texture
-                            # get texture name from image name
-                            texture_name = os.path.basename(texturepath)
-                            if len(texture_name) > 20:
-                                print ('short name', texture_name[:21])
-                                texture_name = texture_name[:21]
-                            # create texture
-                            try: # check if exists first
-                                tex1 = bpy.data.textures[texture_name]
-                            except:
-                                tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
-                                DIR = os.path.dirname(texturepath)
-                                newimage = load_image(texturepath, DIR)
-
-                                # Use new image
-                                tex1.image = newimage
-
-                            # Add texture slot to material
-                            mat1.reflection_texture=tex1.image
-
-                        except:
-                            print ('Reflection Map not found: %s'%texturepath)
+            for raw_mat in raw_mats: # raw_mat[0] contains material name
+                bpy.PT2_mats[raw_mat[0]] = stp.parseMaterial( iter(raw_mat[1]), raw_mat[0] )
+                print(raw_mat[0], type(bpy.PT2_mats[raw_mat[0]]))
+                mat1 = cbm4.createBlenderMaterialfromP4(raw_mat[0], bpy.PT2_mats[raw_mat[0]], runtime, overwrite=True)
 
 ####################################################################################################################
-
-                if mesh.materials.__contains__(mat1.name):
+                if mesh.materials.__contains__(raw_mat[0]):
                     #print ('True')
                     skip = 1
                 else:
-                    mesh.materials.append(mat1.createBlenderMaterial())
+                    mesh.materials.append(mat1)
                     skip = 1
                     #print ('False')
-
 
                 #############################################################
                 #
