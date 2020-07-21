@@ -29,6 +29,7 @@ def getTexture( texturePath, runtime ):
         # create texture
         try: # check if exists first
             tex1 = bpy.data.textures[texture_name]
+            newimage = text.image
         except KeyError:
             tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
             DIR = os.path.dirname(file_location)
@@ -39,10 +40,10 @@ def getTexture( texturePath, runtime ):
     except FileNotFoundError:
         bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
         print ('Texture Map not found: %s'%file_location)
-        tex1=None #fixme: this will cause the Texture setup to not happen
+        newimage=None #fixme: this will cause the Texture setup to not happen
 
 
-    return(tex1.image)
+    return(newimage)
 
 
 def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
