@@ -29,7 +29,7 @@ def getTexture( texturePath, runtime ):
         # create texture
         try: # check if exists first
             tex1 = bpy.data.textures[texture_name]
-            newimage = text.image
+            newimage = tex1.image
         except KeyError:
             tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
             DIR = os.path.dirname(file_location)
