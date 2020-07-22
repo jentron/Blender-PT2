@@ -50,9 +50,13 @@ def ApplyMorph(ob, morph, mtrx_swap=mtrx_swap ):
         except:
             sk = ob.shape_key_add(name=morph.name, from_mix=False)
     sk.value = morph.value
-    sk.slider_min = morph.min
-    sk.slider_max = morph.max
-    
+    if abs(morph.max - morph.min) < 10: # all default min/max pairs will fail this test
+        sk.slider_min = morph.min
+        sk.slider_max = morph.max
+    else:
+        sk.slider_min = -1
+        sk.slider_max = 1
+
     # position each vert 
     for d in morph.deltas:
         for i, v in d.items():
