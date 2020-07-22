@@ -323,9 +323,8 @@ class CharacterImport(bpy.types.Operator):
                         if depth < 2:
                             break
 
-            elif x.startswith('actor '):
-                tempstr = x.replace('actor ', '')
-                currentActor = ptl.namecheck01(tempstr)
+            elif keyword == 'actor':
+                currentActor = ptl.namecheck01(args)
 
                 for bone in cr2.bones:
                     if bone.name == currentActor:
@@ -334,30 +333,21 @@ class CharacterImport(bpy.types.Operator):
                         #data.write(outstr)
             ###############################################
 
+            elif keyword == 'angles':
+                currentbone.angles = args
 
-            elif x.startswith('angles '):
-                tempstr = x.replace('angles ', '')
-                currentbone.angles = tempstr
+            elif keyword == 'origin':
+                currentbone.origin = args
 
-            elif x.startswith('origin '):
-                tempstr = x.replace('origin ', '')
-                currentbone.origin = tempstr
+            elif keyword == 'endPoint':
+                currentbone.endpoint = args
 
-            elif x.startswith('endPoint '):
-                #print (x)
-                tempstr = x.replace('endPoint ', '')
-                currentbone.endpoint = tempstr
-            elif x.startswith('parent '):
-                #print (x)
-                tempstr = x.replace('parent ', '')
-                tempstr = ptl.namecheck01(tempstr)
-                currentbone.parent = tempstr
-            elif x.startswith('orientation '):
-                #print (x)
-                tempstr = x.replace('orientation ', '')
-                currentbone.orientation = tempstr
-                outstr = ' orientation:' + tempstr + '\n'
-                #data.write(outstr)
+            elif keyword == 'parent':
+                currentbone.parent = ptl.namecheck01(args)
+
+            elif keyword == 'orientation':
+                currentbone.orientation = args
+
             elif x.startswith('twistX twistx'):
                 tempstr = x.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '
@@ -399,42 +389,46 @@ class CharacterImport(bpy.types.Operator):
                 currentbone.xyz = currentbone.xyz + tempstr + ' '
 
 
-            elif x.startswith('figure') and figureCheck == False:
+            elif keyword == 'figure' and figureCheck == False:
                 figureCheck = True
                 #print ('========= Figure check True !! ===============')
 
-            elif x.startswith('name') and figureCheck == True:
-                tempstr = x.replace('name', '')
-                tempstr = tempstr.strip()
-                CharName = tempstr
-                figureCheck = ''
+            elif keyword == 'name' and figureCheck == True:
+                CharName = args
+                figureCheck = False
 
             ##########################################################
             #  Morph Targets.
             #
-            elif x.startswith('targetGeom ') is True:
-                morph.name = x.lstrip('targetGeom ')
+            elif keyword == 'targetGeom':
+                morph.name = args
                 morphloop = depth
                 morph.group = currentActor
-            elif x.startswith('k ') is True and depth >= morphloop:
+
+            elif keyword == 'k' and depth >= morphloop:
                  morph.value = float(x.split()[2])
-            elif x.startswith('min ') is True and depth >= morphloop:
+
+            elif keyword == 'min' and depth >= morphloop:
                  morph.min = float(x.split()[1])
-            elif x.startswith('max ') is True and depth >= morphloop:
+
+            elif keyword == 'max' and depth >= morphloop:
                  morph.max = float(x.split()[1])
-            elif x.startswith('d ') is True and depth >= morphloop:
-                # print('d', x)
-                tempmorph = x.lstrip('d ')
-                i, dx, dy, dz = [float(s) for s in tempmorph.split()]
+
+            elif keyword == 'd' and depth >= morphloop:
+                i, dx, dy, dz = [float(s) for s in args.split()]
                 morph.deltas.append( { int(i) : Vector( (dx, dy, dz) ) } )
-            elif x.startswith('indexes ') is True and depth >= morphloop:
-                 morph.indexes = float(x.split()[1])
-            elif x.startswith('numbDeltas ') is True and depth >= morphloop:
-                 morph.numbDeltas = float(x.split()[1])
-            elif x.startswith ('{'):
+
+            elif keyword == 'indexes' and depth >= morphloop:
+                 morph.indexes = float(args)
+
+            elif keyword == 'numbDeltas' and depth >= morphloop:
+                 morph.numbDeltas = float(args)
+
+            elif keyword == '{':
                 depth += 1
                 # print('Depth++: ', depth, morphloop, matloop)
-            elif x.startswith ('}'):
+
+            elif keyword == '}':
                 depth -= 1
                 if morphloop >= depth:
                     # morph.print()
@@ -446,10 +440,10 @@ class CharacterImport(bpy.types.Operator):
             ##########################################################
             #  Build material array
             #
-            elif x.startswith('material ') is True:
+            elif keyword == 'material':
                 #print ('Mat:', line.replace('material', ''))
-                mat_name = x.replace('material', '').strip()
                 readcomps = True # Turn on component reader
+                mat_name = args
                 print ('Mat Name:', mat_name)
 
                 while readcomps:

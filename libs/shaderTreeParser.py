@@ -10,20 +10,20 @@ import shaderTrees as st
 def parseShaderTree(x, xs):
     tree=st.shaderTree()
     level=x[0]
-    lastCommand = ''
+    lastKeyword = ''
     lastArgs = ''
 
     while True:
         x=next(xs)
-        command = x[1][0]
+        keyword = x[1][0]
         args = x[1][1:]
         currentLevel = x[0]
 
-        if command.startswith('}'):
+        if keyword == '}':
             break
 
         elif currentLevel > level:
-            if lastCommand == 'node':
+            if lastKeyword == 'node':
                 node_type=lastArgs[0].strip('"')
                 node_key =lastArgs[1].strip('"')
                 # print('Create a node of type %s with key %s'%(node_type, node_key) )
@@ -32,24 +32,24 @@ def parseShaderTree(x, xs):
                 skipSection(x, xs)
 
 
-        elif command == 'node':
+        elif keyword == 'node':
             node_key =args[1].strip('"')
             node_type=args[0].strip('"')
             # print('Create a node of type %s with key %s'%(node_type, node_key) )
             # Creating the node here is mostly redundant, but in the event there is no nested node data...
             tree.nodes[node_key] = st.baseNode(node_type, node_key=node_key )
 
-        elif command == 'fireflyRoot':
+        elif keyword == 'fireflyRoot':
             tree.fireflyRoot = args[0].strip('"')
 
-        elif command == 'superflyRoot':
+        elif keyword == 'superflyRoot':
             tree.superflyRoot = args[0].strip('"')
 
         else:
-            print('Unparsed shaderTree command:', command, args)
-            #tree[command] = x[1][1:]
+            print('Unparsed shaderTree keyword:', keyword, args)
+            #tree[keyword] = x[1][1:]
 
-        lastCommand = command
+        lastKeyword = keyword
         lastArgs = args
 
     return(tree)
@@ -60,45 +60,45 @@ nodeParams += ['gamma', 'compoundOutputsPos',
                'compoundInputsPos', 'compoundShowPreview']
 def parseNode(node_type, node_key, x, xs):
     level=x[0]
-    lastCommand=''
+    lastKeyword=''
     lastArgs=''
     node = st.baseNode(node_type, node_key=node_key )
     
     while True:
         x=next(xs)
-        command = x[1][0]
+        keyword = x[1][0]
         args = x[1][1:]
         
-        if command.startswith('}'):
+        if keyword.startswith('}'):
             break
-        elif command == 'name':
+        elif keyword == 'name':
             node.name=' '.join(args).strip('"')
-        elif command == 'selectedOutput':
+        elif keyword == 'selectedOutput':
             node.selectedOutput =' '.join(args).strip('"')
-        elif command == 'nodeInput':
+        elif keyword == 'nodeInput':
             node_type=' '.join(args).strip('"')
             node.nodeInputs[node_type]=st.nodeInput(node_type)
-        elif command == 'output':
+        elif keyword == 'output':
             pass # will parse on the '{'
         elif x[0] > level:
-            if lastCommand == 'nodeInput':
+            if lastKeyword == 'nodeInput':
                 node_type = ' '.join(lastArgs).strip('"')
                 node.nodeInputs[node_type]=parseNodeInput(node_type, x, xs)
-            elif lastCommand == 'output':
+            elif lastKeyword == 'output':
                 node_type = ' '.join(lastArgs).strip('"')
                 node.nodeOutputs[node_type]=parseNodeOutput(node_type, x, xs)
-            elif lastCommand == 'shaderTree':
+            elif lastKeyword == 'shaderTree':
                 node.subTrees.append( parseShaderTree(x, xs) )
             else:
-                print('Skipping %s, unknown node'%lastCommand)
+                print('Skipping %s, unknown node'%lastKeyword)
                 skipSection(x, xs)
-        elif command == 'shaderTree':
+        elif keyword == 'shaderTree':
             pass # will pick up on the '{'
-        elif command in nodeParams:
-            node.params[command] = st.nodeValue(args)
+        elif keyword in nodeParams:
+            node.params[keyword] = st.nodeValue(args)
         else:
-            print('Unparsed nodeParam', command, args)
-        lastCommand=command
+            print('Unparsed nodeParam', keyword, args)
+        lastKeyword=keyword
         lastArgs=args
 
     return(node)
@@ -108,26 +108,26 @@ def parseNodeOutput(node_type, x, xs):
     nodeOutput = st.nodeOutput(node_type)
     while True:
         x=next(xs)
-        command = x[1][0]
+        keyword = x[1][0]
         args = x[1][1:]
-        if command.startswith('}'):
+        if keyword.startswith('}'):
             break
-        elif command == 'name':
+        elif keyword == 'name':
             nodeOutput.name = ' '.join(args).strip('"')
-        elif command == 'exposedAs':
+        elif keyword == 'exposedAs':
             nodeOutput.exposedAs = ' '.join(args).strip('"')
         elif x[0] > level:
             print('Error!')
         else:
-            print('Unparsed nodeOutput', command, args)
+            print('Unparsed nodeOutput', keyword, args)
             
     return(nodeOutput)
 
 def skipSection(x, xs):
     while True:
         x=next(xs)
-        command = x[1][0]
-        if command.startswith('}'):
+        keyword = x[1][0]
+        if keyword.startswith('}'):
             break
 
     
@@ -136,32 +136,32 @@ def parseNodeInput(node_type, x, xs):
     nodeInput = st.nodeInput(node_type)
     while True:
         x=next(xs)
-        command = x[1][0]
+        keyword = x[1][0]
         args = x[1][1:]
-        if command.startswith('}'):
+        if keyword.startswith('}'):
             break
-        elif command == 'name':
+        elif keyword == 'name':
             nodeInput.name = ' '.join(args).strip('"')
-        elif command == 'value':
+        elif keyword == 'value':
             nodeInput.value = st.nodeValue(args)
-        elif command == 'parmR':
+        elif keyword == 'parmR':
             nodeInput.parmR = st.nodeValue(args)
-        elif command == 'parmG':
+        elif keyword == 'parmG':
             nodeInput.parmG = st.nodeValue(args)
-        elif command == 'parmB':
+        elif keyword == 'parmB':
             nodeInput.parmB = st.nodeValue(args)
-        elif command == 'node':
+        elif keyword == 'node':
             if args[0] != 'NO_NODE':
                 nodeInput.node = ' '.join(args).strip('"')
-        elif command == 'file':
+        elif keyword == 'file':
             if args[0] != 'NO_MAP':
                 nodeInput.file = ' '.join(args).strip('"')
-        elif command == 'exposedAs':
+        elif keyword == 'exposedAs':
             nodeInput.exposedAs = ' '.join(args).strip('"')
         elif x[0] > level:
             print('Error!')
         else:
-            print('Unparsed nodeInput', command, args)
+            print('Unparsed nodeInput', keyword, args)
             
     return(nodeInput)
 
@@ -180,28 +180,30 @@ def parseMaterial(xs, name='Material'):
         lastKeyword = next(xs) # entering with a '{' on top
         while True:
             x=next(xs)
-            command = x[1][0]
+            keyword = x[1][0]
             args = x[1][1:]
-            # print(command, args)
-            if command.startswith('{') and lastKeyword.startswith('shaderTree') :
+            # print(keyword, args)
+            if keyword.startswith('{') and lastKeyword.startswith('shaderTree') :
                 mat.shaderTree = parseShaderTree(x, xs)
-            elif command == 'shaderTree':
+            elif keyword == 'shaderTree':
                 pass # will pick up on the '{'
-            elif command in p4_colorNames :
-                mat.p4[ command ] = st.nodeValue([float(i) for i in args])
-            elif command in p4_mapNames :
-                mat.p4[ command ] = 'NO_MAP' if args[0] == 'NO_MAP' else ' '.join(args).strip('"')
-            elif command in p4_parmNames :
-                mat.p4[ command ] = st.nodeValue([float(i) for i in args])
-            elif command == 'fireflyRoot':
+            elif keyword in p4_colorNames :
+                mat.p4[ keyword ] = st.nodeValue([float(i) for i in args])
+            elif keyword in p4_mapNames :
+                mat.p4[ keyword ] = 'NO_MAP' if args[0] == 'NO_MAP' else ' '.join(args).strip('"')
+            elif keyword == '0' and lastKeyword in p4_mapNames:
+                pass # some texture maps end in a linebreak 0 0
+            elif keyword in p4_parmNames :
+                mat.p4[ keyword ] = st.nodeValue([float(i) for i in args])
+            elif keyword == 'fireflyRoot':
                 mat.fireflyRoot = ' '.join(args).strip('"')
-            elif command == 'superflyRoot':
+            elif keyword == 'superflyRoot':
                 mat.superflyRoot = ' '.join(args).strip('"')
-            elif command.startswith('}'):
+            elif keyword.startswith('}'):
                 break
             else:
-                print('Top Level: ', x[1])
-            lastKeyword = command
+                print('Top Level: ', keyword, args)
+            lastKeyword = keyword
 
     except StopIteration:
         pass
@@ -215,6 +217,7 @@ if __name__ == '__main__':
         [1, ['KaColor', '0', '0', '0', '1']],
         [1, ['NsExponent', '50']],
         [1, ['textureMap', 'NO_MAP']],
+        [1, ['bumpMap', ':Runtime:Textures:bump.jpg']],
         [1, ['shaderTree']],
         [2, ['{']],
         [2, ['node', '"PhysicalSurface"', '"PhysicalSurface_1"']],
