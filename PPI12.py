@@ -2,6 +2,7 @@
 # Simplified BSD License, see http://www.opensource.org/licenses/
 #-----------------------------------------------------------------------------
 # Copyright (c) 2011-2012, HEB Ventures, LLC
+# Copyright (c) 2020, Ronald Jensen
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without

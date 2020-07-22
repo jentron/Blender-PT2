@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Jul 17 05:15:05 2020
-
-@author: rjensen
-"""
+#=============================================================================
+# Simplified BSD License, see http://www.opensource.org/licenses/
+#-----------------------------------------------------------------------------
+# Copyright (c) 2020, Ronald Jensen
+# All rights reserved.
 
 import shaderTrees as st
 

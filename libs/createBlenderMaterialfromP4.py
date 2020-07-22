@@ -1,3 +1,9 @@
+#=============================================================================
+# Simplified BSD License, see http://www.opensource.org/licenses/
+#-----------------------------------------------------------------------------
+# Copyright (c) 2020, Ronald Jensen
+# All rights reserved.
+
 ## cmt=D.texts['createBlenderMaterialfromP4.py'].as_module()
 ## newmat=cmt.createBlenderMaterialfromP4('Preview', mat['Preview'])
 

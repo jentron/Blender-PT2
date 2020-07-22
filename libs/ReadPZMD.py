@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+#=============================================================================
+# Simplified BSD License, see http://www.opensource.org/licenses/
+#-----------------------------------------------------------------------------
+# Copyright (c) 2020, Ronald Jensen
+# All rights reserved.
 """
 pmd (Poser Morph D...)
-Created on Tue Jul  7 15:37:48 2020
-
-@author: rjensen
 """
+
 import struct
 import os
 
