@@ -272,6 +272,9 @@ class CharacterImport(bpy.types.Operator):
         #print ('-------------')
 
         depth = 0 # count of open braces
+        # blacklist is a list of top-level sections we are not interested in right now
+        blacklist = ['baseProp', 'controlProp', 'hairGrowthGroup', 'magnetDeformerProp',
+                     'setGeomHandlerOffset', 'sphereZoneProp']
 
         current_mat = 'No Mat'
         raw_mats = [] # an array of the unparsed materials
@@ -302,7 +305,22 @@ class CharacterImport(bpy.types.Operator):
 # start of parser loop
         for y in file: #file is already an iterable
             x = y.strip() # do we .strip() here instead of at every level below?
-            if x.startswith('actor '):
+            try:
+                (keyword, args) = x.split(maxsplit=1)
+            except ValueError: # the value error should mean there are no args on this line
+                keyword = x
+
+            if keyword in blacklist and depth == 1:
+                while True: # iterate through the file until the section ends
+                    x=next(file).strip()
+                    if x.startswith('{'):
+                        depth += 1
+                    elif x.startswith('}'):
+                        depth -= 1
+                        if depth < 2:
+                            break
+
+            elif x.startswith('actor '):
                 tempstr = x.replace('actor ', '')
                 currentActor = ptl.namecheck01(tempstr)
 
@@ -978,7 +996,7 @@ class CharacterImport(bpy.types.Operator):
 
             for raw_mat in raw_mats: # raw_mat[0] contains material name
                 bpy.PT2_mats[raw_mat[0]] = stp.parseMaterial( iter(raw_mat[1]), raw_mat[0] )
-                print(raw_mat[0], type(bpy.PT2_mats[raw_mat[0]]))
+                # print(raw_mat[0], type(bpy.PT2_mats[raw_mat[0]]))
                 mat1 = cbm4.createBlenderMaterialfromP4(raw_mat[0], bpy.PT2_mats[raw_mat[0]], runtime, overwrite=self.overwrite)
                 mat_name_map[mat1.name] = raw_mat[0]
 
