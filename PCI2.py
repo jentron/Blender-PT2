@@ -118,44 +118,48 @@ bpy.cr2count = 0
 ###########################################
 
 class CR2Class():
+    def __init__(self):
+        self.geompath = ''
+        self.morphBinaryFile = ''
+        self.name = ''
+        self.geomData = geomData()
+#        self.materialData = materialData()
+#        self.channels = channels()
+        self.materials = []
+        self.bones = []
 
-    geompath = ''
-    morphBinaryFile = ''
-    name = ''
+class geomData():
+    def __init__(self):
+        self.verts = []
+        self.UVverts = []
+        self.faces = []
 
-    class geomData():
-        verts = []
-        UVverts = []
-        faces = []
+class materialData():
+    def __init__(self):
+        self.color = 55
+        self.alpha = 75
 
-
-    materials = []
-
-    class materialData():
-        color = 55
-        alpha = 75
-
-    bones = []
-
-    class boneData():
-        xyz = ''
-        name = ''
-        parent = ''
-        endpoint = ''
-        origin = ''
-        orientation = ''
-        angles = ''
+class boneData():
+    def __init__(self):
+        self.xyz = ''
+        self.name = ''
+        self.parent = ''
+        self.endpoint = ''
+        self.origin = ''
+        self.orientation = ''
+        self.angles = ''
 
 
-        class channels():
-            PBM = 'partial body morph'
-            xoffseta = 0
-            #xyz = []
+class channels():
+    def __init__(self):
+        PBM = 'partial body morph'
+        xoffseta = 0
+        #xyz = []
 
-            # Example Fuction
-            def xfactor(xyz):
-                value=xyz*5
-                return(value)
+    # Example Fuction
+    def xfactor(xyz):
+        value=xyz*5
+        return(value)
 
 ###########################################
 #
@@ -166,7 +170,7 @@ class CR2Class():
 
 class CharacterImport(bpy.types.Operator):
 
-    PropArray = []
+
     #time_start = time.time()
     bl_idname = "import.poser_cr2"
     bl_label = "Load Character"
@@ -181,14 +185,15 @@ class CharacterImport(bpy.types.Operator):
         default=False,
     )
 
+    def __init__(self):
+        self.PropArray = []
+
     def execute(self, context):
 
+        cr2 = CR2Class()
+        
         print ('\n\n')
         print ('===================================================================')
-        PropArray = []
-        geompath = ''
-        file_error = ''
-        #bonecount = len(character.bones)
 
         #########################################
         #
@@ -200,14 +205,12 @@ class CharacterImport(bpy.types.Operator):
         runtime = Runtime.Runtime(self.filepath)
         #runtime.print()
 
-        cr2 = CR2Class()
 
         CharName = os.path.basename(self.filepath)[:-4] ## assuming a 3 char extension
         print ('CharName:', CharName)
 
         file = ptl.PT2_open(self.filepath, 'rt')
         #data = open('/media/disk/armData.txt','w')
-        cr2.bones = []
         morphcounts = []
 
         for y in file:
@@ -234,7 +237,7 @@ class CharacterImport(bpy.types.Operator):
                            #print (skipcheck)
 
                if skipcheck == False:
-                  cr2.bones.append(cr2.boneData())
+                  cr2.bones.append(boneData())
                   bonecount = len(cr2.bones)
                   thisbone = cr2.bones[bonecount-1]
                   tempstr = ptl.namecheck01(tempstr)
@@ -469,9 +472,6 @@ class CharacterImport(bpy.types.Operator):
 
 # end of parser loop
 
-
-
-
         #data.close()
         file.close()
         bpy.cr2count = bpy.cr2count + 1
@@ -502,8 +502,7 @@ class CharacterImport(bpy.types.Operator):
         #bpy.context.scene.update()
 
         arm = bpy.data.armatures.new(cr2.name)
-        import bpy_extras
-        bpy_extras.object_utils.object_data_add(context, arm, operator=None)
+        object_utils.object_data_add(context, arm, operator=None)
         bpy.context.view_layer.update()
         arm = bpy.context.active_object
         arm.location.x = 0
@@ -953,8 +952,7 @@ class CharacterImport(bpy.types.Operator):
                         mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
                         k+=1
 
-        import bpy_extras
-        bpy_extras.object_utils.object_data_add(context, mesh, operator=None)
+        object_utils.object_data_add(context, mesh, operator=None)
 
         #for face in cr2.geomData.faces:
         #    print (face)
