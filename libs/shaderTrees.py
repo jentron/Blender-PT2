@@ -21,12 +21,12 @@ class nodeValue(list):
 
 p4_mapNames = ['textureMap', 'bumpMap', 'reflectionMap', 'transparencyMap']
 
-class material():
+class Material():
     def __init__(self, name='Material'):
         self.name=name
         self.blender_name=''
         self.p4={}
-        self.shaderTree={}
+        self.shaderTree=shaderTree()
         self.fireflyRoot  = None  # FIXME: These point to a valid shader node name
         self.superflyRoot = None
     
@@ -60,6 +60,9 @@ class shaderTree():
         self.superflyRoot = None
     
     def write(self, depth=0, file=sys.stdout):
+        if(len(self.nodes) == 0):
+            return
+        
         prefix='\t'*depth
         print('%sshaderTree'%(prefix, ), file=file)
         print( '%s\t{'%(prefix,), file=file)
