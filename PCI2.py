@@ -237,6 +237,7 @@ class CharacterImport(bpy.types.Operator):
         file = ptl.PT2_open(self.filepath, 'rt')
         #data = open('/media/disk/armData.txt','w')
         morphcounts = []
+        propcounts  = []
 
         for y in file:
             x=y.strip()
@@ -273,6 +274,10 @@ class CharacterImport(bpy.types.Operator):
                if morphcounts.__contains__(tempstr) is False:
                   morphcounts.append(tempstr)
 
+            elif x.startswith('prop ') is True:
+               tempstr = x
+               if propcounts.__contains__(tempstr) is False:
+                  propcounts.append(tempstr)
 
             ##############################
             #
@@ -294,6 +299,7 @@ class CharacterImport(bpy.types.Operator):
 
         file.close()
         print ('Number of Morphs:', len(morphcounts))
+        print ('Number of Props:',  len(propcounts))
         #print ('=======')
         #for bone in cr2.bones:
         #    print (bone.name)
@@ -302,7 +308,7 @@ class CharacterImport(bpy.types.Operator):
         depth = 0 # count of open braces
         # blacklist is a list of top-level sections we are not interested in right now
         blacklist = ['baseProp', 'controlProp', 'hairGrowthGroup', 'magnetDeformerProp',
-                     'setGeomHandlerOffset', 'sphereZoneProp']
+                     'setGeomHandlerOffset', 'sphereZoneProp', 'prop']
 
         current_mat = 'No Mat'
         raw_mats = [] # an array of the unparsed materials
