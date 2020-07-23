@@ -185,8 +185,32 @@ class CharacterImport(bpy.types.Operator):
         default=False,
     )
 
+    pnu: EnumProperty(
+        name="Scale Factor",
+        description="",
+        items=(
+            ('PNU_0', "No Scale", "Import model without scaling"),
+            ('PNU_4', "Poser 4 Scale", "1 PNU = 8 feet (or 96 inches/2.43 meters)"),
+            ('GEEP' , "Dr Geep Scale", "1 PNU = 8 feet 4 inches (or 100 inches/2.54 meters)"),
+            ('PNU_6', "Poser 6+ Scale", "1 PNU = 8.6 feet (or 103.2 inches/2.62 meters)"),
+        ),
+        default='GEEP'
+    )
+
     def __init__(self):
         self.PropArray = []
+
+    def getScaleFactor(self):
+        bnu =  bpy.context.scene.unit_settings.scale_length
+        if self.pnu == 'GEEP':
+            scale_factor = 100 * 0.0254 / bnu
+        elif self.pnu == 'PNU_4':
+            scale_factor = 96 * 0.0254 / bnu
+        elif self.pnu == 'PNU_6':
+            scale_factor = 103.2 * 0.0254 / bnu
+        else:
+            scale_factor = 1
+        return(scale_factor)
 
     def execute(self, context):
 
@@ -194,6 +218,7 @@ class CharacterImport(bpy.types.Operator):
         
         print ('\n\n')
         print ('===================================================================')
+        print ('Scale Factor = ', self.getScaleFactor() )
 
         #########################################
         #
@@ -413,6 +438,9 @@ class CharacterImport(bpy.types.Operator):
 
             elif keyword == 'max' and depth >= morphloop:
                  morph.max = float(x.split()[1])
+
+            elif keyword == 'trackingScale' and depth >= morphloop:
+                 morph.trackingScale = float(x.split()[1])
 
             elif keyword == 'd' and depth >= morphloop:
                 i, dx, dy, dz = [float(s) for s in args.split()]

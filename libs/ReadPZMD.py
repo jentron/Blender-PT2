@@ -19,6 +19,7 @@ class Morph:
         self.deltas=[]
         self.min = 0
         self.max = 1
+        self.trackingScale = 0.02
         self.value = 0
         self.name = 'shape'
         self.group = ''

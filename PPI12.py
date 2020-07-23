@@ -126,6 +126,31 @@ class LoadPoserProp(bpy.types.Operator):
         default=False,
     )
 
+    pnu: EnumProperty(
+        name="Scale Factor",
+        description="",
+        items=(
+            ('PNU_0', "No Scale", "Import model without scaling"),
+            ('PNU_4', "Poser 4 Scale", "1 PNU = 8 feet (or 96 inches/2.43 meters)"),
+            ('GEEP' , "Dr Geep Scale", "1 PNU = 8 feet 4 inches (or 100 inches/2.54 meters)"),
+            ('PNU_6', "Poser 6+ Scale", "1 PNU = 8.6 feet (or 103.2 inches/2.62 meters)"),
+        ),
+        default='GEEP'
+    )
+
+    def getScaleFactor(self):
+        bnu =  bpy.context.scene.unit_settings.scale_length
+        if self.pnu == 'GEEP':
+            scale_factor = 100 * 0.0254 / bnu
+        elif self.pnu == 'PNU_4':
+            scale_factor = 96 * 0.0254 / bnu
+        elif self.pnu == 'PNU_6':
+            scale_factor = 103.2 * 0.0254 / bnu
+        else:
+            scale_factor = 1
+        print('Scale Factor:', scale_factor)
+        return(scale_factor)
+
     CPT = []
     child_parent = []
 
