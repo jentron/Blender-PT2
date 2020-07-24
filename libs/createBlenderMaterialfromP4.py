@@ -29,7 +29,7 @@ def getTexture( texturePath, runtime ):
         # Create texture
         # get texture name from image name
         texture_name = os.path.basename(file_location)
-        if len(texture_name) > 20:
+        if len(texture_name) > 20: #why this limit?
             print ('short name', texture_name[:21])
             texture_name = texture_name[:21]
         # create texture
@@ -46,7 +46,7 @@ def getTexture( texturePath, runtime ):
     except FileNotFoundError:
         bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
         print ('Texture Map not found: %s'%file_location)
-        newimage=None #fixme: this will cause the Texture setup to not happen
+        newimage=-1 #-1 causes the Texture setup to happen
 
 
     return(newimage)
@@ -130,7 +130,8 @@ def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
         node_texture = nodes.new(type='ShaderNodeTexImage')
         node_texture.location = -600,0
         node_texture.label = 'Diffuse Map'
-        node_texture.image = diffuse_texture
+        if diffuse_texture != -1:
+            node_texture.image = diffuse_texture
         node_diffuseColor = nodes.new(type='ShaderNodeRGB')
         node_diffuseColor.location = -500,250
         node_diffuseColor.outputs['Color'].default_value=diffuse_color
@@ -149,7 +150,8 @@ def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
         node_trtext  = nodes.new(type='ShaderNodeTexImage')
         node_trtext.location = -600,-250
         node_trtext.label = 'Transparent Map'
-        node_trtext.image = transparent_texture
+        if transparent_texture != -1:
+            node_trtext.image = transparent_texture
         node_trtext.image.colorspace_settings.name = 'Non-Color'
         link = links.new(node_mapping.outputs['Vector'], node_trtext.inputs['Vector'])
         link = links.new(node_trtext.outputs['Color'], node_pbsdf.inputs['Alpha'])
@@ -162,7 +164,8 @@ def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
         node_bumptext= nodes.new(type='ShaderNodeTexImage')
         node_bumptext.location = -600,-500
         node_bumptext.label = 'Bump Map'
-        node_bumptext.image = bump_texture
+        if bump_texture != -1:
+            node_bumptext.image = bump_texture
         node_bumptext.image.colorspace_settings.name = 'Non-Color'
         link = links.new(node_mapping.outputs['Vector'], node_bumptext.inputs['Vector'])
         link = links.new(node_bumptext.outputs['Color'], node_bump.inputs['Height'])

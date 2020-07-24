@@ -174,7 +174,7 @@ p4_parmNames = ['NsExponent', 'tMin', 'tMax', 'tExpo',
 
 
 def parseMaterial(xs, name='Material'):
-    mat=st.material(name)
+    mat=st.Material(name)
 
     try:
         lastKeyword = next(xs) # entering with a '{' on top

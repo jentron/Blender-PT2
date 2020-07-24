@@ -99,7 +99,6 @@ sys.path.append(local_module_path)
 import PT2_open as ptl
 import RuntimeFolder as Runtime
 import GetStringRes
-import Material as matlib #remove me
 import shaderTrees as st
 import shaderTreeParser as stp
 import createBlenderMaterialfromP4 as cbm4
