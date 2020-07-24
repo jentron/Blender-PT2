@@ -303,6 +303,10 @@ class CharacterImport(bpy.types.Operator):
         #for bone in cr2.bones:
         #    print (bone.name)
         #print ('-------------')
+        print ('=======')
+        for prop in propcounts:
+            print (prop)
+        print ('-------------')
 
         depth = 0 # count of open braces
         # blacklist is a list of top-level sections we are not interested in right now
