@@ -1,3 +1,9 @@
+#=============================================================================
+# Simplified BSD License, see http://www.opensource.org/licenses/
+#-----------------------------------------------------------------------------
+# Copyright (c) 2020, Ronald Jensen
+# All rights reserved.
+
 import gzip
 from pathlib import Path
 import re

@@ -1,3 +1,9 @@
+#=============================================================================
+# Simplified BSD License, see http://www.opensource.org/licenses/
+#-----------------------------------------------------------------------------
+# Copyright (c) 2020, Ronald Jensen
+# All rights reserved.
+
 from math import *
 from mathutils import *
 
@@ -20,16 +26,21 @@ def ApplyMorph(ob, morph, mtrx_swap=mtrx_swap ):
         print( 'Morph %s has wrong number of deltas! %d vs %d'%(morph.name, len_deltas, morph.indexes) )
         return
 
+    # make sure there is a basis key
     try:
         sk_basis = ob.data.shape_keys.key_blocks['Basis']
     except:
         sk_basis = ob.shape_key_add(name="Basis", from_mix=False)
 
     ob.data.shape_keys.use_relative = False
-    
-    
+
 
     # print ("Morph:", morph.name, "Size:", len(morph.deltas) )
+    # FIXME: there are 3 cases here, and only two are handled: 
+    #   1. The morph is for a named vertex group (try)
+    #   2. The morph is for the entire mesh (except)
+    #   3. The morph is for a vertex group that did not get loaded
+    # FIXME! how do I separate cases 2 and 3?
     try:
         vg_idx = ob.vertex_groups[morph.group].index # get group index
         vs = [ v for v in ob.data.vertices if vg_idx in [ vg.group for vg in v.groups ] ]
@@ -43,10 +54,16 @@ def ApplyMorph(ob, morph, mtrx_swap=mtrx_swap ):
             sk = ob.vertex_groups[morph.group].id_data.shape_key_add(name=morph.name, from_mix=False)
         except:
             sk = ob.shape_key_add(name=morph.name, from_mix=False)
+
+    # set the slider values
     sk.value = morph.value
-    sk.slider_min = morph.min
-    sk.slider_max = morph.max
-    
+    if abs(morph.max - morph.min) < 10: # all default min/max pairs will fail this test
+        sk.slider_min = morph.min
+        sk.slider_max = morph.max
+    else:
+        sk.slider_min = -1
+        sk.slider_max = 1
+
     # position each vert 
     for d in morph.deltas:
         for i, v in d.items():

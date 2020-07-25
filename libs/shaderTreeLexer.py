@@ -1,3 +1,10 @@
+#=============================================================================
+# Simplified BSD License, see http://www.opensource.org/licenses/
+#-----------------------------------------------------------------------------
+# Copyright (c) 2020, Ronald Jensen
+# All rights reserved.
+
+
 import shaderTreeParser as stp
 import PT2_open as ptl 
 

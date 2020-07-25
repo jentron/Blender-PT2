@@ -117,44 +117,48 @@ bpy.cr2count = 0
 ###########################################
 
 class CR2Class():
+    def __init__(self):
+        self.geompath = ''
+        self.morphBinaryFile = ''
+        self.name = ''
+        self.geomData = geomData()
+#        self.materialData = materialData()
+#        self.channels = channels()
+        self.materials = []
+        self.bones = []
 
-    geompath = ''
-    morphBinaryFile = ''
-    name = ''
+class geomData():
+    def __init__(self):
+        self.verts = []
+        self.UVverts = []
+        self.faces = []
 
-    class geomData():
-        verts = []
-        UVverts = []
-        faces = []
+class materialData():
+    def __init__(self):
+        self.color = 55
+        self.alpha = 75
 
-
-    materials = []
-
-    class materialData():
-        color = 55
-        alpha = 75
-
-    bones = []
-
-    class boneData():
-        xyz = ''
-        name = ''
-        parent = ''
-        endpoint = ''
-        origin = ''
-        orientation = ''
-        angles = ''
+class boneData():
+    def __init__(self):
+        self.xyz = ''
+        self.name = ''
+        self.parent = ''
+        self.endpoint = ''
+        self.origin = ''
+        self.orientation = ''
+        self.angles = ''
 
 
-        class channels():
-            PBM = 'partial body morph'
-            xoffseta = 0
-            #xyz = []
+class channels():
+    def __init__(self):
+        PBM = 'partial body morph'
+        xoffseta = 0
+        #xyz = []
 
-            # Example Fuction
-            def xfactor(xyz):
-                value=xyz*5
-                return(value)
+    # Example Fuction
+    def xfactor(xyz):
+        value=xyz*5
+        return(value)
 
 ###########################################
 #
@@ -165,7 +169,7 @@ class CR2Class():
 
 class CharacterImport(bpy.types.Operator):
 
-    PropArray = []
+
     #time_start = time.time()
     bl_idname = "import.poser_cr2"
     bl_label = "Load Character"
@@ -180,14 +184,40 @@ class CharacterImport(bpy.types.Operator):
         default=False,
     )
 
+    pnu: EnumProperty(
+        name="Scale Factor",
+        description="",
+        items=(
+            ('PNU_0', "No Scale", "Import model without scaling"),
+            ('PNU_4', "Poser 4 Scale", "1 PNU = 8 feet (or 96 inches/2.43 meters)"),
+            ('GEEP' , "Dr Geep Scale", "1 PNU = 8 feet 4 inches (or 100 inches/2.54 meters)"),
+            ('PNU_6', "Poser 6+ Scale", "1 PNU = 8.6 feet (or 103.2 inches/2.62 meters)"),
+        ),
+        default='GEEP'
+    )
+
+    def __init__(self):
+        self.PropArray = []
+
+    def getScaleFactor(self):
+        bnu =  bpy.context.scene.unit_settings.scale_length
+        if self.pnu == 'GEEP':
+            scale_factor = 100 * 0.0254 / bnu
+        elif self.pnu == 'PNU_4':
+            scale_factor = 96 * 0.0254 / bnu
+        elif self.pnu == 'PNU_6':
+            scale_factor = 103.2 * 0.0254 / bnu
+        else:
+            scale_factor = 1
+        return(scale_factor)
+
     def execute(self, context):
 
+        cr2 = CR2Class()
+        
         print ('\n\n')
         print ('===================================================================')
-        PropArray = []
-        geompath = ''
-        file_error = ''
-        #bonecount = len(character.bones)
+        print ('Scale Factor = ', self.getScaleFactor() )
 
         #########################################
         #
@@ -199,15 +229,14 @@ class CharacterImport(bpy.types.Operator):
         runtime = Runtime.Runtime(self.filepath)
         #runtime.print()
 
-        cr2 = CR2Class()
 
         CharName = os.path.basename(self.filepath)[:-4] ## assuming a 3 char extension
         print ('CharName:', CharName)
 
         file = ptl.PT2_open(self.filepath, 'rt')
         #data = open('/media/disk/armData.txt','w')
-        cr2.bones = []
         morphcounts = []
+        propcounts  = []
 
         for y in file:
             x=y.strip()
@@ -233,7 +262,7 @@ class CharacterImport(bpy.types.Operator):
                            #print (skipcheck)
 
                if skipcheck == False:
-                  cr2.bones.append(cr2.boneData())
+                  cr2.bones.append(boneData())
                   bonecount = len(cr2.bones)
                   thisbone = cr2.bones[bonecount-1]
                   tempstr = ptl.namecheck01(tempstr)
@@ -244,6 +273,10 @@ class CharacterImport(bpy.types.Operator):
                if morphcounts.__contains__(tempstr) is False:
                   morphcounts.append(tempstr)
 
+            elif x.startswith('prop ') is True:
+               tempstr = x
+               if propcounts.__contains__(tempstr) is False:
+                  propcounts.append(tempstr)
 
             ##############################
             #
@@ -265,12 +298,16 @@ class CharacterImport(bpy.types.Operator):
 
         file.close()
         print ('Number of Morphs:', len(morphcounts))
+        print ('Number of Props:',  len(propcounts))
         #print ('=======')
         #for bone in cr2.bones:
         #    print (bone.name)
         #print ('-------------')
 
         depth = 0 # count of open braces
+        # blacklist is a list of top-level sections we are not interested in right now
+        blacklist = ['baseProp', 'controlProp', 'hairGrowthGroup', 'magnetDeformerProp',
+                     'setGeomHandlerOffset', 'sphereZoneProp', 'prop']
 
         current_mat = 'No Mat'
         raw_mats = [] # an array of the unparsed materials
@@ -301,9 +338,23 @@ class CharacterImport(bpy.types.Operator):
 # start of parser loop
         for y in file: #file is already an iterable
             x = y.strip() # do we .strip() here instead of at every level below?
-            if x.startswith('actor '):
-                tempstr = x.replace('actor ', '')
-                currentActor = ptl.namecheck01(tempstr)
+            try:
+                (keyword, args) = x.split(maxsplit=1)
+            except ValueError: # the value error should mean there are no args on this line
+                keyword = x
+
+            if keyword in blacklist and depth == 1:
+                while True: # iterate through the file until the section ends
+                    x=next(file).strip()
+                    if x.startswith('{'):
+                        depth += 1
+                    elif x.startswith('}'):
+                        depth -= 1
+                        if depth < 2:
+                            break
+
+            elif keyword == 'actor':
+                currentActor = ptl.namecheck01(args)
 
                 for bone in cr2.bones:
                     if bone.name == currentActor:
@@ -312,30 +363,21 @@ class CharacterImport(bpy.types.Operator):
                         #data.write(outstr)
             ###############################################
 
+            elif keyword == 'angles':
+                currentbone.angles = args
 
-            elif x.startswith('angles '):
-                tempstr = x.replace('angles ', '')
-                currentbone.angles = tempstr
+            elif keyword == 'origin':
+                currentbone.origin = args
 
-            elif x.startswith('origin '):
-                tempstr = x.replace('origin ', '')
-                currentbone.origin = tempstr
+            elif keyword == 'endPoint':
+                currentbone.endpoint = args
 
-            elif x.startswith('endPoint '):
-                #print (x)
-                tempstr = x.replace('endPoint ', '')
-                currentbone.endpoint = tempstr
-            elif x.startswith('parent '):
-                #print (x)
-                tempstr = x.replace('parent ', '')
-                tempstr = ptl.namecheck01(tempstr)
-                currentbone.parent = tempstr
-            elif x.startswith('orientation '):
-                #print (x)
-                tempstr = x.replace('orientation ', '')
-                currentbone.orientation = tempstr
-                outstr = ' orientation:' + tempstr + '\n'
-                #data.write(outstr)
+            elif keyword == 'parent':
+                currentbone.parent = ptl.namecheck01(args)
+
+            elif keyword == 'orientation':
+                currentbone.orientation = args
+
             elif x.startswith('twistX twistx'):
                 tempstr = x.replace(' ', '_')
                 currentbone.xyz = currentbone.xyz + tempstr + ' '
@@ -377,42 +419,49 @@ class CharacterImport(bpy.types.Operator):
                 currentbone.xyz = currentbone.xyz + tempstr + ' '
 
 
-            elif x.startswith('figure') and figureCheck == False:
+            elif keyword == 'figure' and figureCheck == False:
                 figureCheck = True
                 #print ('========= Figure check True !! ===============')
 
-            elif x.startswith('name') and figureCheck == True:
-                tempstr = x.replace('name', '')
-                tempstr = tempstr.strip()
-                CharName = tempstr
-                figureCheck = ''
+            elif keyword == 'name' and figureCheck == True:
+                CharName = args
+                figureCheck = False
 
             ##########################################################
             #  Morph Targets.
             #
-            elif x.startswith('targetGeom ') is True:
-                morph.name = x.lstrip('targetGeom ')
+            elif keyword == 'targetGeom':
+                morph.name = args
                 morphloop = depth
                 morph.group = currentActor
-            elif x.startswith('k ') is True and depth >= morphloop:
+
+            elif keyword == 'k' and depth >= morphloop:
                  morph.value = float(x.split()[2])
-            elif x.startswith('min ') is True and depth >= morphloop:
+
+            elif keyword == 'min' and depth >= morphloop:
                  morph.min = float(x.split()[1])
-            elif x.startswith('max ') is True and depth >= morphloop:
+
+            elif keyword == 'max' and depth >= morphloop:
                  morph.max = float(x.split()[1])
-            elif x.startswith('d ') is True and depth >= morphloop:
-                # print('d', x)
-                tempmorph = x.lstrip('d ')
-                i, dx, dy, dz = [float(s) for s in tempmorph.split()]
+
+            elif keyword == 'trackingScale' and depth >= morphloop:
+                 morph.trackingScale = float(x.split()[1])
+
+            elif keyword == 'd' and depth >= morphloop:
+                i, dx, dy, dz = [float(s) for s in args.split()]
                 morph.deltas.append( { int(i) : Vector( (dx, dy, dz) ) } )
-            elif x.startswith('indexes ') is True and depth >= morphloop:
-                 morph.indexes = float(x.split()[1])
-            elif x.startswith('numbDeltas ') is True and depth >= morphloop:
-                 morph.numbDeltas = float(x.split()[1])
-            elif x.startswith ('{'):
+
+            elif keyword == 'indexes' and depth >= morphloop:
+                 morph.indexes = float(args)
+
+            elif keyword == 'numbDeltas' and depth >= morphloop:
+                 morph.numbDeltas = float(args)
+
+            elif keyword == '{':
                 depth += 1
                 # print('Depth++: ', depth, morphloop, matloop)
-            elif x.startswith ('}'):
+
+            elif keyword == '}':
                 depth -= 1
                 if morphloop >= depth:
                     # morph.print()
@@ -424,10 +473,10 @@ class CharacterImport(bpy.types.Operator):
             ##########################################################
             #  Build material array
             #
-            elif x.startswith('material ') is True:
+            elif keyword == 'material':
                 #print ('Mat:', line.replace('material', ''))
-                mat_name = x.replace('material', '').strip()
                 readcomps = True # Turn on component reader
+                mat_name = args
                 print ('Mat Name:', mat_name)
 
                 while readcomps:
@@ -449,9 +498,6 @@ class CharacterImport(bpy.types.Operator):
                         comps = []
 
 # end of parser loop
-
-
-
 
         #data.close()
         file.close()
@@ -483,8 +529,7 @@ class CharacterImport(bpy.types.Operator):
         #bpy.context.scene.update()
 
         arm = bpy.data.armatures.new(cr2.name)
-        import bpy_extras
-        bpy_extras.object_utils.object_data_add(context, arm, operator=None)
+        object_utils.object_data_add(context, arm, operator=None)
         bpy.context.view_layer.update()
         arm = bpy.context.active_object
         arm.location.x = 0
@@ -934,8 +979,7 @@ class CharacterImport(bpy.types.Operator):
                         mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
                         k+=1
 
-        import bpy_extras
-        bpy_extras.object_utils.object_data_add(context, mesh, operator=None)
+        object_utils.object_data_add(context, mesh, operator=None)
 
         #for face in cr2.geomData.faces:
         #    print (face)
@@ -977,7 +1021,7 @@ class CharacterImport(bpy.types.Operator):
 
             for raw_mat in raw_mats: # raw_mat[0] contains material name
                 bpy.PT2_mats[raw_mat[0]] = stp.parseMaterial( iter(raw_mat[1]), raw_mat[0] )
-                print(raw_mat[0], type(bpy.PT2_mats[raw_mat[0]]))
+                # print(raw_mat[0], type(bpy.PT2_mats[raw_mat[0]]))
                 mat1 = cbm4.createBlenderMaterialfromP4(raw_mat[0], bpy.PT2_mats[raw_mat[0]], runtime, overwrite=self.overwrite)
                 mat_name_map[mat1.name] = raw_mat[0]
 

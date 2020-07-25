@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Jul 15 11:03:12 2020
+#=============================================================================
+# Simplified BSD License, see http://www.opensource.org/licenses/
+#-----------------------------------------------------------------------------
+# Copyright (c) 2020, Ronald Jensen
+# All rights reserved.
 
-@author: rjensen
-"""
 import sys
 
 NO_PARM = None
