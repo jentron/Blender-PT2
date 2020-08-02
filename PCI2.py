@@ -311,7 +311,7 @@ class CharacterImport(bpy.types.Operator):
         depth = 0 # count of open braces
         # blacklist is a list of top-level sections we are not interested in right now
         blacklist = ['baseProp', 'controlProp', 'hairGrowthGroup', 'magnetDeformerProp',
-                     'setGeomHandlerOffset', 'sphereZoneProp', 'prop']
+                     'setGeomHandlerOffset', 'sphereZoneProp', 'prop', 'alternateGeom']
 
         current_mat = 'No Mat'
         raw_mats = [] # an array of the unparsed materials
@@ -569,6 +569,9 @@ class CharacterImport(bpy.types.Operator):
                 #array = [float(s) for s in string.split()]
                 ebone.tail = [float(s) for s in bone.endpoint.split()]
                 #ebone.parent = bone.parent
+                ebone.head_radius = 0.02
+                ebone.tail_radius = 0.02
+                ebone.envelope_distance = 0.05
                 pass
 
                 #####################################
