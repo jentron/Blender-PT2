@@ -54,28 +54,29 @@ def getTexture( texturePath, runtime ):
 
 def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
     try:
-        diffuse_color   = mat.p4['KdColor']
+        #expect the first 3 at a minimum
+        diffuse_color   = mat.p4['KdColor'] 
         specular_color  = mat.p4['KsColor']
         ambient_color   = mat.p4['KaColor']
-        texture_color   = mat.p4['TextureColor']
-        reflection_color= mat.p4['ReflectionColor']
-        reflect_factor =  mat.p4['reflectionStrength'][0]
-        ns_exponent =     mat.p4['NsExponent'][0] ### TODO: NsExponent/100 into specular value
-        tMax =            mat.p4['tMax'][0]       ### TODO: Minimum transparency?
-        tMin =            mat.p4['tMin'][0]
-        tExpo =           mat.p4['tExpo'][0]      ### TODO: Change between transparencies?
-        bumpStrength =    mat.p4['bumpStrength'][0]
-        ks_ignore_texture = mat.p4['ksIgnoreTexture'][0]
-        reflect_thru_lights = mat.p4['reflectThruLights'][0]
-        reflect_thru_kd = mat.p4['reflectThruKd'][0]
+        texture_color   = mat.p4['TextureColor']             if    'TextureColor' in mat.p4 else (1,1,1)
+        reflection_color= mat.p4['ReflectionColor']          if 'ReflectionColor' in mat.p4 else (1,1,1)
+        reflect_factor =  mat.p4['reflectionStrength'][0]    if 'reflectionStrength' in mat.p4 else 0
+        ns_exponent =     mat.p4['NsExponent'][0]            if 'NsExponent' in mat.p4 else 0 ### TODO: NsExponent/100 into specular value
+        tMax =            mat.p4['tMax'][0]                  if 'tMax' in mat.p4 else 0 ### TODO: Minimum transparency?
+        tMin =            mat.p4['tMin'][0]                  if 'tMin' in mat.p4 else 0
+        tExpo =           mat.p4['tExpo'][0]                 if 'tExpo' in mat.p4 else 0     ### TODO: Change between transparencies?
+        bumpStrength =    mat.p4['bumpStrength'][0]          if 'bumpStrength' in mat.p4 else 0
+        ks_ignore_texture = mat.p4['ksIgnoreTexture'][0]     if 'ksIgnoreTexture' in mat.p4 else 0
+        reflect_thru_lights = mat.p4['reflectThruLights'][0] if 'reflectThruLights' in mat.p4 else 0
+        reflect_thru_kd = mat.p4['reflectThruKd'][0]         if 'reflectThruKd' in mat.p4 else 0
     except:
         raise ValueError('Function requires a shaderTree material')
 
     # load the textures
-    diffuse_texture    = getTexture(mat.p4['textureMap'], runtime)
-    bump_texture       = getTexture(mat.p4['bumpMap'], runtime)
+    diffuse_texture    = getTexture(mat.p4['textureMap'], runtime)       if 'textureMap' in mat.p4 else None
+    bump_texture       = getTexture(mat.p4['bumpMap'], runtime)          if 'bumpMap' in mat.p4 else None
     reflection_texture = None # getTexture(mat.p4['reflectionMap'], runtime)
-    transparent_texture = getTexture(mat.p4['transparencyMap'], runtime)
+    transparent_texture = getTexture(mat.p4['transparencyMap'], runtime) if 'transparencyMap' in mat.p4 else None
 
     # Set custom values
     alpha = 1 - tMax
