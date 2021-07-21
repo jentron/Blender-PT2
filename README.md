@@ -11,7 +11,7 @@ How far will I get?
 Please rename the folder from Blender-PT2 to just PT2 and then import as any other Blender add-on
 
 On Windows I do something like this (assuming Blender 2.93 and the git repository in Documents/source):
-
+```dos
 mklink /D %APPDATA%"\Blender Foundation\Blender\2.93\scripts\addons\PT2" %USERPROFILE%"\Documents\source\Blender-PT2\"
-
+```
 This allows me to keep my git repository in my normal source code folder and still have the addon installed.
