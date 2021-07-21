@@ -215,7 +215,7 @@ class LoadPoserProp(bpy.types.Operator):
                     subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
                     subpath = subpath.strip()
                     subpath = subpath.replace(':', '\\')
-                    geompath = runtime.find_geometry_path(subpath)
+                    geompath = runtime.find_runtime_path(subpath)
 
                 if x.strip().startswith('geomCustom') is True:
                    print ('Next obj\n')
@@ -290,7 +290,7 @@ class LoadPoserProp(bpy.types.Operator):
                     # Read outside OBJ file here.
                     subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
                     subpath = subpath.strip()
-                    geompath = runtime.find_geometry_path(subpath)
+                    geompath = runtime.find_runtime_path(subpath)
                     try:
                         file = ptl.PT2_open(geompath, 'rt')
                         for x in file:

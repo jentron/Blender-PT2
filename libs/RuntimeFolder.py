@@ -141,6 +141,18 @@ class Runtime:
 
         return(geometry)
 
+    def find_runtime_path(self, file):
+        ''' find a file in a runtime path. File is the string from a Poser config file'''
+        tokens=self.tokenize(file)
+        try:
+            idx = next(i for i,v in enumerate(tokens) if v.lower() == 'runtime')
+            runtime = os.sep.join(tokens[idx+1:])
+            runtime = self.getRuntimePath(runtime)
+        except StopIteration:
+            runtime = os.sep.join(tokens[-1:])
+            runtime = self.getSourcePath(runtime)
+
+        return(runtime)
 
     def tokenize(self, file):
         ''' Convert a file path string to a list '''

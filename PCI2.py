@@ -702,7 +702,7 @@ class CharacterImport(bpy.types.Operator):
         char['GeomPath'] = cr2.geompath
         print (self.filepath)
         print ('geompath:', cr2.geompath)
-        fullgeompath=runtime.find_geometry_path(cr2.geompath)
+        fullgeompath=runtime.find_runtime_path(cr2.geompath)
         print(fullgeompath)
 
         ###########################################
