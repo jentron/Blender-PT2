@@ -6,6 +6,7 @@
 
 import re
 import os
+import GetStringRes
 
 class Runtime:
     def __init__(self, file=''):
@@ -114,6 +115,10 @@ class Runtime:
 
     def find_texture_path(self, file):
         ''' find a texture in a runtime path. File is the string from a Poser config file'''
+        if file.startswith("GetStringRes") is True:
+            cmd, lib, lin, foo = re.split("[(,)]", file)
+            file = GetStringRes.stringResourceList[int(lib)][int(lin)]
+
         tokens=self.tokenize(file)
         #TODO: Validate and case-insensitive
         try:
