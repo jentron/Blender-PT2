@@ -5,6 +5,7 @@ pnu = 103.2
 bnu =  C.scene.unit_settings.scale_length
 
 scale_factor = pnu * 0.0254 / bnu
+print('Scale Factor: ', scale_factor)
 
 if 'Mesh' in bpy.data.objects:
     bpy.ops.object.select_all(action='DESELECT')
@@ -26,11 +27,12 @@ if armkey in bpy.data.objects:
     bpy.ops.object.select_all(action='DESELECT')
 #    bpy.data.objects[armkey].select_set(False)
 #    bpy.data.objects[armkey].hide_viewport = True
-
-if 'MeshObject' in bpy.data.objects:
+mesh_name = 'MeshObject'
+if mesh_name in bpy.data.objects:
+    ob=bpy.data.objects[mesh_name]
     bpy.ops.object.select_all(action='DESELECT')
-    bpy.data.objects['MeshObject'].select_set(True)
-    bpy.context.view_layer.objects.active = bpy.data.objects['MeshObject']
+    ob.select_set(True)
+    bpy.context.view_layer.objects.active = ob
     if  bpy.context.mode != 'OBJECT':
         bpy.ops.object.posemode_toggle()
     bpy.ops.transform.rotate(value=1.5708, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
