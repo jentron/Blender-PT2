@@ -800,7 +800,10 @@ class CharacterImport(bpy.types.Operator):
                 current_mat = temp.split()[1]
 
             elif temp.startswith('g ') is True:
-                tempstr = temp.split()[1]
+                try:
+                  tempstr = temp.split()[1]
+                except IndexError:
+                  tempstr = 'Null' # there is no group name
                 current_group = tempstr
                 #print ('Current group:', current_group)
 
