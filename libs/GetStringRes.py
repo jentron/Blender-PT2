@@ -248,4 +248,33 @@ for var in sparse_vars:
 
 stringResourceList[1029] = sparse_list
 
+## GetStringRes Values (English Version)
+## Numeric
+## 1052
+sparse_vars=[
+( 18, "Runtime/Geometries/maleOrig/maleOrig.obj"),
+( 19, "Runtime/Geometries/maleNudeHi/maleNudeHi.obj"),
+( 20, "Runtime/Geometries/maleNudeLo/maleNudeLo.obj"),
+( 21, "Runtime/Geometries/maleSuitHi/maleSuitHi.obj"),
+( 22, "Runtime/Geometries/maleSuitLo/maleSuitLo.obj"),
+( 23, "Runtime/Geometries/maleCasHi/maleCasHi.obj"),
+( 24, "Runtime/Geometries/maleCasLo/maleCasLo.obj"),
+( 27, "Runtime/Geometries/femaleOrig/femaleOrig.obj"),
+( 28, "Runtime/Geometries/femaleNudeHi/femaleNudeHi.obj"),
+( 29, "Runtime/Geometries/femaleNudeLo/femaleNudeLo.obj"),
+( 30, "Runtime/Geometries/femaleSuitHi/femaleSuitHi.obj"),
+( 31, "Runtime/Geometries/femaleSuitLo/femaleSuitLo.obj"),
+( 32, "Runtime/Geometries/femaleCasHi/femaleCasHi.obj"),
+( 33, "Runtime/Geometries/femaleCasLo/femaleCasLo.obj"),
+( 36, "Runtime/Geometries/childNudeHi/childNudeHi.obj"),
+( 37, "Runtime/Geometries/childNudeLo/childNudeLo.obj"),
+( 38, "Runtime/Geometries/childCasHi/childCasHi.obj"),
+( 39, "Runtime/Geometries/childCasLo/childCasLo.obj")]
+sparse_list = {}
+
+for var in sparse_vars:
+  sparse_list[var[0]] = var[1]
+
+stringResourceList[1052] = sparse_list
+
 # print(stringResourceList[1029][53])

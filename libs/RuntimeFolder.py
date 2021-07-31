@@ -134,6 +134,10 @@ class Runtime:
 
     def find_geometry_path(self, file):
         ''' find a geometry in a runtime path. File is the string from a Poser config file'''
+        if file.startswith("GetStringRes") is True:
+            cmd, lib, lin, foo = re.split("[(,)]", file)
+            file = GetStringRes.stringResourceList[int(lib)][int(lin)]
+            
         tokens=self.tokenize(file)
         #TODO: Validate and case-insensitive
         try:
@@ -148,6 +152,10 @@ class Runtime:
 
     def find_runtime_path(self, file):
         ''' find a file in a runtime path. File is the string from a Poser config file'''
+        if file.startswith("GetStringRes") is True:
+            cmd, lib, lin, foo = re.split("[(,)]", file)
+            file = GetStringRes.stringResourceList[int(lib)][int(lin)]
+
         tokens=self.tokenize(file)
         try:
             idx = next(i for i,v in enumerate(tokens) if v.lower() == 'runtime')
