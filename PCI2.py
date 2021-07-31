@@ -293,8 +293,8 @@ class CharacterImport(bpy.types.Operator):
             elif x.startswith('morphBinaryFile ') is True:
                 tempstr = x
                 tempstr = tempstr.replace('morphBinaryFile ', '')
-                cr2.morphpath = tempstr
-                print ('External Morph File:', cr2.morphpath)
+                cr2.morphBinaryFile = runtime.find_runtime_path(tempstr)
+                print ('External Morph File:', tempstr, ' -> ', cr2.morphBinaryFile)
 
         file.close()
         print ('Number of Morphs:', len(morphcounts))
@@ -820,6 +820,7 @@ class CharacterImport(bpy.types.Operator):
         mesh = bpy.data.meshes.new('Mesh')
         #mesh = bpy.data.meshes.new()
         ob = bpy.data.objects.new('MeshObject', mesh)
+        ob.data['morphFile']=cr2.morphBinaryFile
         #ob = bpy.data.objects.new('Body', mesh)
         scn = bpy.context.scene #C = bpy.context, D = bpy.data
 #        scn.objects.link(ob) D.collections['Collection 1'].objects.link(D.objects['MeshObject'])
@@ -989,8 +990,6 @@ class CharacterImport(bpy.types.Operator):
                         mesh.uv_layers.active.data[loop_idx].uv = UVvertices[textureindex]
                         k+=1
 
-        object_utils.object_data_add(context, mesh, operator=None)
-
         #for face in cr2.geomData.faces:
         #    print (face)
         ##########################################################################
@@ -1119,6 +1118,7 @@ class CharacterImport(bpy.types.Operator):
 
         print ('Results:')
         print ('geompath:', cr2.geompath)
+        print ('morphPath:', cr2.morphBinaryFile)
         #print ('gemodata.verts:', cr2.geomData.verts)
         #for bone in cr2.bones:
             #print ('--------------------------')
