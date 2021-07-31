@@ -18,8 +18,8 @@ This allows me to keep my git repository in my normal source code folder and sti
 
 # PCI2 Scripts
 Here are some useful scripts for working with the character importer. They are experimental.
-scripts/PrepareCharacter.py -- remove the extra mesh PCI2 creates, adds weld and armature modifiers to the remaining mesh
-scripts/renameBones.py -- rename bones and vertex groups from Poser convention 'lBone' to Blender convention 'bone.L'
+* scripts/PrepareCharacter.py -- remove the extra mesh PCI2 creates, adds weld and armature modifiers to the remaining mesh
+* scripts/renameBones.py -- rename bones and vertex groups from Poser convention 'lBone' to Blender convention 'bone.L'
 
-scripts/Setup SSS and Texture.py -- for each material in the active object, set subsurface scattering to default values
-scripts/ApplyPMD.py -- attempt to read and insert PMD morphs as shapekeys. 
+* scripts/Setup SSS and Texture.py -- for each material in the active object, set subsurface scattering to default values
+* scripts/ApplyPMD.py -- attempt to read and insert PMD morphs as shapekeys. 
