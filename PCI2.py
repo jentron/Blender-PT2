@@ -108,8 +108,8 @@ from ReadPZMD import *
 print ('\n')
 print ('--- Starting Poser Character Importer Version 3 ---')
 
-bpy.cr2count = 0
-
+bpy.cr2count = 0 # this has a bug, it doesn't persist across saves
+ 
 ###########################################
 #
 #  CR2 Class
@@ -287,7 +287,7 @@ class CharacterImport(bpy.types.Operator):
                 # print (x)
                 tempstr = x.replace(r'figureResFile ', '')
                 cr2.geompath = tempstr.strip('"')
-                print ('GeomFile:', cr2.geompath)
+                # print ('GeomFile:', cr2.geompath)
 
             elif x.startswith('morphBinaryFile ') is True:
                 tempstr = x.replace('morphBinaryFile ', '')
@@ -426,7 +426,8 @@ class CharacterImport(bpy.types.Operator):
                 #print ('========= Figure check True !! ===============')
 
             elif keyword == 'name' and figureCheck == True:
-                CharName = args
+                if not args.startswith('Figure'):
+                    CharName = args
                 figureCheck = False
 
             ##########################################################
@@ -512,7 +513,7 @@ class CharacterImport(bpy.types.Operator):
         ###########################################
 
         # CharName not working, reset to default:
-        CharName = 'Body'
+        #CharName = 'Body'
 
         cr2.name = CharName + str(bpy.cr2count)
 
@@ -521,14 +522,10 @@ class CharacterImport(bpy.types.Operator):
 
         print (bpy.context.mode)
 
-        while bpy.context.mode != 'OBJECT':
-            bpy.ops.object.editmode_toggle()
-
+        if bpy.context.mode != 'OBJECT':
+            # bpy.ops.object.editmode_toggle()
+            bpy.ops.object.mode_set(mode='OBJECT')
         print ("Creating Armature 3")
-
-        #bpy.ops.object.add(type='ARMATURE')
-        #arm = bpy.context.object
-        #bpy.context.scene.update()
 
         arm = bpy.data.armatures.new(cr2.name)
         object_utils.object_data_add(context, arm, operator=None)
@@ -540,9 +537,9 @@ class CharacterImport(bpy.types.Operator):
         print (arm)
 
 
-        arm.name = CharName + str(bpy.cr2count)
+        arm.name = "Armature_"+cr2.name
         armdata = arm.data
-        armdata.name = CharName + str(bpy.cr2count)
+        armdata.name = "Arm_data_"+cr2.name
 
 
         if bpy.context.mode != 'EDIT_MODE':
@@ -815,9 +812,9 @@ class CharacterImport(bpy.types.Operator):
 
         print (facearray[1])
 
-        mesh = bpy.data.meshes.new('Mesh')
+        mesh = bpy.data.meshes.new(cr2.name+'Mesh')
         #mesh = bpy.data.meshes.new()
-        ob = bpy.data.objects.new('MeshObject', mesh)
+        ob = bpy.data.objects.new(cr2.name, mesh)
         ob.data['morphFile']=cr2.morphBinaryFile
         #ob = bpy.data.objects.new('Body', mesh)
         scn = bpy.context.scene #C = bpy.context, D = bpy.data
