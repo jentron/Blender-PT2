@@ -1,7 +1,13 @@
 import bpy
 C = bpy.context
+'''
+'PNU_0', "No Scale", "Import model without scaling"
+'PNU_4', "Poser 4 Scale", "1 PNU = 8 feet (or 96 inches/2.43 meters)"
+'GEEP' , "Dr Geep Scale", "1 PNU = 8 feet 4 inches (or 100 inches/2.54 meters)"
+'PNU_6', "Poser 6+ Scale", "1 PNU = 8.6 feet (or 103.2 inches/2.62 meters)"
+'''
 
-pnu = 103.2
+pnu = 103.2 # in inches
 bnu =  C.scene.unit_settings.scale_length
 
 scale_factor = pnu * 0.0254 / bnu
