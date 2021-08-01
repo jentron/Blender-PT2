@@ -284,17 +284,15 @@ class CharacterImport(bpy.types.Operator):
             #
 
             elif x.startswith('figureResFile ') is True:
-                #print (x)
-                tempstr = x
-                tempstr = tempstr.replace('figureResFile ', '')
-                cr2.geompath = tempstr
-                #print ('GeomFile:', character.geompath)
+                # print (x)
+                tempstr = x.replace(r'figureResFile ', '')
+                cr2.geompath = tempstr.strip('"')
+                print ('GeomFile:', cr2.geompath)
 
             elif x.startswith('morphBinaryFile ') is True:
-                tempstr = x
-                tempstr = tempstr.replace('morphBinaryFile ', '')
-                cr2.morphBinaryFile = runtime.find_runtime_path(tempstr)
-                print ('External Morph File:', tempstr, ' -> ', cr2.morphBinaryFile)
+                tempstr = x.replace('morphBinaryFile ', '')
+                cr2.morphBinaryFile = runtime.find_runtime_path( tempstr.strip('"') )
+                print ('External Morph File:', cr2.morphBinaryFile)
 
         file.close()
         print ('Number of Morphs:', len(morphcounts))
