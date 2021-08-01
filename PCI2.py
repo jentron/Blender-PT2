@@ -2,7 +2,7 @@
 # Simplified BSD License, see http://www.opensource.org/licenses/
 #-----------------------------------------------------------------------------
 # Copyright (c) 2011-2012, HEB Ventures, LLC
-# Copyright (c) 2020, Ronald Jensen
+# Copyright (c) 2020, 2021, Ronald Jensen
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without
@@ -182,6 +182,30 @@ class CharacterImport(bpy.types.Operator):
         name="Overwrite Materials",
         description="Overwrite current materials with the same name",
         default=False,
+    )
+
+    externalMorph: BoolProperty(
+        name="Load External Morphs",
+        description="Attempt to load external morphs if they are found",
+        default=True,
+    )
+
+    zUp: BoolProperty(
+        name="Fix Orientation",
+        description="Rotate model so Z is up",
+        default=True,
+    )
+
+    prepare: BoolProperty(
+        name="Prepare Model",
+        description="Add armature modifier to the mesh",
+        default=True,
+    )
+
+    rename: BoolProperty(
+        name="Rename Bones",
+        description="Rename bones and groups for Blender convention",
+        default=True,
     )
 
     pnu: EnumProperty(
@@ -534,6 +558,8 @@ class CharacterImport(bpy.types.Operator):
         arm.location.x = 0
         arm.location.y = 0
         arm.location.z = 0
+        arm.data.display_type = 'STICK'
+        arm.show_in_front = True
         print (arm)
 
 
@@ -543,7 +569,7 @@ class CharacterImport(bpy.types.Operator):
 
 
         if bpy.context.mode != 'EDIT_MODE':
-            bpy.ops.object.editmode_toggle()
+            bpy.ops.object.mode_set(mode='EDIT')
 
         #print ('Object Name:', arm.name)
         #print ('Armature Name:', armdata.name)
@@ -1139,8 +1165,93 @@ class CharacterImport(bpy.types.Operator):
         except:
             bpy.CR2data =[[cr2.name, cr2]]
         #print (cr2.bones[0].xyz)
+        
+        ###########################################
+        #
+        #  Final touches, Blender is all set up
+        #
+        ###########################################
+
+        if self.externalMorph: #Attempt to load external morphs if they are found
+            if cr2.morphBinaryFile:
+                morphs=readPZMD(cr2.morphBinaryFile)
+                for morph in morphs:
+                     ApplyMorph(ob, morph)
+
+
+        if self.zUp:#"Rotate model so Z is up",
+            if bpy.context.mode != 'OBJECT':
+                bpy.ops.object.mode_set(mode='OBJECT')
+
+            bpy.ops.object.select_all(action='DESELECT')
+            arm.select_set(True)
+            ob.select_set(True)
+            bpy.ops.transform.rotate(value=1.5708, orient_axis='X', orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', constraint_axis=(True, False, False), mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+            bpy.ops.object.select_all(action='DESELECT')
+            
+
+        if self.pnu != 'PNU_0': # Scale the model
+            scale_factor=self.getScaleFactor()
+            if bpy.context.mode != 'OBJECT':
+                bpy.ops.object.mode_set(mode='OBJECT')
+
+            bpy.ops.object.select_all(action='DESELECT')
+            arm.select_set(True)
+            ob.select_set(True)
+            bpy.ops.transform.resize(value=(scale_factor, scale_factor, scale_factor), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=1, use_proportional_connected=False, use_proportional_projected=False)
+
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+
+        if self.prepare: #"Add armature modifier to the mesh",
+            if bpy.context.mode != 'OBJECT':
+                bpy.ops.object.mode_set(mode='OBJECT')
+            bpy.ops.object.select_all(action='DESELECT')
+            ob.select_set(True)
+            bpy.context.view_layer.objects.active = ob
+            #bpy.ops.object.modifier_add(type='WELD')
+            #bpy.context.object.modifiers["Weld"].merge_threshold = 0.0001
+            #bpy.context.object.modifiers["Weld"].show_expanded = False
+            bpy.ops.object.modifier_add(type='ARMATURE')
+            bpy.context.object.modifiers["Armature"].object = arm
+            bpy.ops.object.shade_smooth()
+    
+        if self.rename: #"Rename bones and groups for Blender convention",
+            for vg in ob.vertex_groups:
+                new_name = re.sub(r'^([a-z])([A-Z])(.+)',r'\2\3.\1',vg.name)
+                if new_name == vg.name:
+                    if vg.name.startswith('right'):
+                        new_name = re.sub(r'^(right)([A-Z])(.+)',r'\2\3.r',vg.name)
+                    elif vg.name.startswith('left'):
+                        new_name = re.sub(r'^(left)([A-Z])(.+)',r'\2\3.l',vg.name)
+    
+                print(vg.name, '->', new_name)
+                if new_name != vg.name:
+                    vg.name = new_name
+
+            for vg in arm.data.bones:
+                new_name = re.sub(r'^([a-z])([A-Z])(.+)',r'\2\3.\1',vg.name)
+                if new_name == vg.name:
+                    if vg.name.startswith('right'):
+                        new_name = re.sub(r'^(right)([A-Z])(.+)',r'\2\3.r',vg.name)
+                    elif vg.name.startswith('left'):
+                        new_name = re.sub(r'^(left)([A-Z])(.+)',r'\2\3.l',vg.name)
+                print(vg.name, '->', new_name)
+                if new_name != vg.name:
+                    vg.name = new_name
+
+        
+        
+        ###########################################
+        #
+        #  Really finished
+        #
+        ###########################################
+
         print ('len bones:',  len(cr2.bones))
         bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        ob.select_set(True)
+        arm.select_set(True)
         return {'FINISHED'}
 
     def invoke(self, context, event):
