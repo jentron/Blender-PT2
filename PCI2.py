@@ -397,8 +397,9 @@ class CharacterImport(bpy.types.Operator):
 
             elif keyword == 'endPoint':
                 currentbone.endpoint = args
-
-            elif keyword == 'parent':
+# there are parent, inkyParent, and nonInkyParent.
+# I have seen all three on the same bone, or just inky and nonInky or just parent
+            elif keyword == 'parent'or keyword == 'nonInkyParent':
                 currentbone.parent = ptl.namecheck01(args)
 
             elif keyword == 'orientation':
@@ -578,9 +579,9 @@ class CharacterImport(bpy.types.Operator):
         for bone in cr2.bones:
             #print (bone.name)
 
-            if bone.name.startswith('BODY'):
-                pass
-            elif bone.origin == '':
+#            if bone.name.startswith('BODY'):
+#                pass
+            if bone.origin == '':
                 pass
             elif bone.name.startswith('bodyMorphs'):
                 pass
