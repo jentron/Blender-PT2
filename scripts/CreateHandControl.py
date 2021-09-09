@@ -16,6 +16,7 @@ hand_bones={
 
 # RIG = bpy.data.objects['Armature']
 RIG = bpy.context.active_object
+RIG.MhxRig='MHX' # a little white lie for now, to enable the MHX panel
 #todo, make sure its an armature
 bpy.ops.object.mode_set(mode='EDIT') # start in edit mode
 bpy.ops.object.mode_set(mode='OBJECT') # start in edit mode
