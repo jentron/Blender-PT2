@@ -42,8 +42,8 @@ import errno
 
 import sys
 local_module_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),'libs')
-print(local_module_path)
-sys.path.append(local_module_path)
+if local_module_path not in sys.path:
+    sys.path.append(local_module_path)
 
 import PT2_open as ptl
 import RuntimeFolder as Runtime
