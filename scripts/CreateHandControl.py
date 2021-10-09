@@ -12,12 +12,17 @@ hand_bones={
 'f_Pinky': ('Pinky1','Pinky2','Pinky3',),
 'f_Thumb': ('Thumb2','Thumb3',),
 }
-
+#todo, make sure its an armature
+if bpy.context.active_object.type != 'ARMATURE':
+    raise ValueError("Selected Object is not an Armature")
 
 # RIG = bpy.data.objects['Armature']
 RIG = bpy.context.active_object
+
+
+
 RIG.MhxRig='MHX' # a little white lie for now, to enable the MHX panel
-#todo, make sure its an armature
+
 bpy.ops.object.mode_set(mode='EDIT') # start in edit mode
 bpy.ops.object.mode_set(mode='OBJECT') # start in edit mode
 bpy.ops.object.mode_set(mode='EDIT') # start in edit mode
@@ -54,6 +59,9 @@ for s in ('.l', '.r'):
         finger = f+s.upper()
         RIG.pose.bones[finger].bone.layers[layer]=True
         RIG.data.bones[finger].layers[0]=False
+        if 'GZM_Knuckle' in bpy.data.objects:
+            RIG.pose.bones[finger].custom_shape = bpy.data.objects["GZM_Knuckle"]
+
         joints=hand_bones[f]
         first_joint=True
         for joint in joints:
