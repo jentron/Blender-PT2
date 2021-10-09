@@ -564,7 +564,7 @@ class CharacterImport(bpy.types.Operator):
         print (arm)
 
 
-        arm.name = "Armature_"+cr2.name
+        arm.name = cr2.name
         armdata = arm.data
         armdata.name = "Arm_data_"+cr2.name
 
@@ -839,9 +839,9 @@ class CharacterImport(bpy.types.Operator):
 
         print (facearray[1])
 
-        mesh = bpy.data.meshes.new(cr2.name+'Mesh')
+        mesh = bpy.data.meshes.new(cr2.name+':Mesh')
         #mesh = bpy.data.meshes.new()
-        ob = bpy.data.objects.new(cr2.name, mesh)
+        ob = bpy.data.objects.new(cr2.name+':Object', mesh)
         ob.data['morphFile']=cr2.morphBinaryFile
         #ob = bpy.data.objects.new('Body', mesh)
         scn = bpy.context.scene #C = bpy.context, D = bpy.data
@@ -1215,6 +1215,12 @@ class CharacterImport(bpy.types.Operator):
             bpy.ops.object.modifier_add(type='ARMATURE')
             bpy.context.object.modifiers["Armature"].object = arm
             bpy.ops.object.shade_smooth()
+            
+            #select armature and set it as mesh parent
+            arm.select_set(True)
+            bpy.context.view_layer.objects.active = arm
+            bpy.ops.object.parent_set(type='OBJECT', keep_transform=False)
+
     
         if self.rename: #"Rename bones and groups for Blender convention",
             for vg in ob.vertex_groups:
