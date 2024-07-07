@@ -87,7 +87,15 @@ def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
     node_pbsdf.inputs['Base Color'].default_value = diffuse_color
     node_pbsdf.inputs['Alpha'].default_value = alpha
     node_pbsdf.inputs['Roughness'].default_value = roughness
-    node_pbsdf.inputs['Specular'].default_value = specular
+    
+    try: # Blender 4.0 revamped the specular system and changed the key name
+        node_pbsdf.inputs['Specular'].default_value = specular
+    except KeyError: #Didn't get it
+        node_pbsdf.inputs['Specular IOR Level'].default_value = specular
+        pass
+    except: #raise other error
+        raise
+        
     link = links.new(node_pbsdf.outputs['BSDF'], node_output.inputs['Surface'])
 
     # create the texture mapping nodes
