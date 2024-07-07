@@ -22,35 +22,9 @@ def getTexture( texturePath, runtime ):
         texturePath = texturePath.rstrip(' 0 0')
     
     file_location = runtime.find_texture_path(texturePath)
-    try:
-        tempfile = open(file_location, 'r')
-        tempfile.close()
-
-        # Create texture
-        # get texture name from image name
-        texture_name = os.path.basename(file_location)
-        if len(texture_name) > 20: #why this limit?
-            print ('short name', texture_name[:21])
-            texture_name = texture_name[:21]
-        # create texture
-        try: # check if exists first
-            tex1 = bpy.data.textures[texture_name]
-            newimage = tex1.image
-        except KeyError:
-            tex1 = bpy.data.textures.new(texture_name, type='IMAGE')
-            DIR = os.path.dirname(file_location)
-            newimage = load_image(file_location, DIR)
-
-            # Use new image
-            tex1.image = newimage
-    except FileNotFoundError:
-        bpy.ops.object.dialog_operator('INVOKE_DEFAULT')
-        print ('Texture Map not found: %s'%file_location)
-        newimage=-1 #-1 causes the Texture setup to happen
-
-
-    return(newimage)
-
+    DIR = os.path.dirname(file_location)
+    newimage = load_image(file_location, DIR,  place_holder=True, check_existing=True, ncase_cmp=True)
+    return( newimage)
 
 def createBlenderMaterialfromP4(name, mat, runtime, overwrite=False):
     try:
