@@ -214,6 +214,7 @@ class LoadPoserProp(bpy.types.Operator):
                 if x.strip().startswith('objFileGeom 0 0') is True:
                     subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
                     subpath = subpath.strip()
+                    subpath = subpath.strip('\'"')
                     subpath = subpath.replace(':', '\\')
                     geompath = runtime.find_runtime_path(subpath)
 
@@ -290,6 +291,7 @@ class LoadPoserProp(bpy.types.Operator):
                     # Read outside OBJ file here.
                     subpath = x.strip().lstrip('objFileGeom 0 0') #FIXME: borked
                     subpath = subpath.strip()
+                    subpath = subpath.strip('\'"')
                     geompath = runtime.find_runtime_path(subpath)
                     try:
                         file = ptl.PT2_open(geompath, 'rt')
